@@ -11,12 +11,30 @@ on:
 
 jobs:
   build:
-    name: Build asrun.exe (Windows)
-    runs-on: windows-latest
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: asrun-windows-x64
+            binary_name: asrun-windows-x64.exe
+            build_dir: build/Release/asrun.exe
+          - os: ubuntu-latest
+            artifact_name: asrun-linux-x64
+            binary_name: asrun-linux-x64
+            build_dir: build/asrun
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install Build Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -24,26 +42,52 @@ jobs:
       - name: Build executable
         run: cmake --build build --config Release
 
-      - name: Verify build artifact
-        shell: powershell
+      - name: Prepare Release Binary
+        shell: bash
         run: |
-          if (Test-Path "build/Release/asrun.exe") {
-              Write-Host "asrun.exe built successfully!"
-          } else {
-              Write-Error "asrun.exe was not found in build/Release/"
-              exit 1
-          }
+          mkdir -p bin
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp build/Release/asrun.exe bin/asrun-windows-x64.exe
+          else
+            cp build/asrun bin/asrun-linux-x64
+            chmod +x bin/asrun-linux-x64
+          fi
 
-      - name: Upload Executable Artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: asrun-windows-x64
-          path: build/Release/asrun.exe
+          name: ${{ matrix.artifact_name }}
+          path: bin/${{ matrix.binary_name }}
 
-      - name: Create GitHub Release Assets
-        if: startsWith(github.ref, 'refs/tags/')
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: asrun-windows-x64
+          path: release_files
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: asrun-linux-x64
+          path: release_files
+
+      - name: Display Artifacts
+        run: ls -la release_files
+
+      - name: Publish Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: build/Release/asrun.exe
+          files: |
+            release_files/asrun-windows-x64.exe
+            release_files/asrun-linux-x64
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

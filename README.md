@@ -19,7 +19,7 @@ Un ejecutable en C++ diseñado para cargar, compilar y ejecutar archivos `.as` (
 - **Soporte Drag & Drop**: Puedes arrastrar y soltar cualquier archivo `.as` directamente sobre el ejecutable `asrun.exe` en Windows. La consola se mantendrá abierta mostrando el resultado hasta que presiones `ENTER`.
 - **Diagnósticos de errores**: Imprime advertencias y errores de compilación indicando archivo, línea y columna exactos.
 - **Gestión con CMake FetchContent**: Descarga e integra la librería oficial `anjo76/angelscript` de forma automática durante la compilación.
-- **Automatización CI/CD (GitHub Actions)**: Genera automáticamente el ejecutable `asrun.exe` como artefacto descargable en cada `push` / `pull request` y adjunta el archivo `.exe` en los *Releases* cuando publicas un tag (ej. `v1.0.0`).
+- **Automatización CI/CD Multiplataforma (GitHub Actions)**: Compila automáticamente binarios optimizados tanto para **Windows (`asrun-windows-x64.exe`)** como para **Linux (`asrun-linux-x64`)** en cada `push`, y los adjunta automáticamente en la sección de *Releases* cuando se publica un Tag (ej. `v1.0.0`) o mediante ejecución manual (`workflow_dispatch`).
 
 ---
 
