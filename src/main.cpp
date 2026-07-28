@@ -169,6 +169,15 @@ int main(int argc, char **argv) {
     ctx->Release();
     engine->ShutDownAndRelease();
 
+    if( Tests::Fails > 0 )
+    {
+        std::cerr << Tests::Fails << " tests failed out of " << ( Tests::Fails + Tests::Passes ) << "\n";
+    }
+    else if( Tests::Passes > 0 )
+    {
+        std::cout << Tests::Passes << " tests passed" << "\n";
+    }
+
     if (shouldPause) {
         PauseConsole();
     }

@@ -54,6 +54,13 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     r = engine->RegisterGlobalFunction("void println(const string &in)", asFUNCTION(ScriptPrintln), asCALL_CDECL);
     if (r < 0) return false;
 
+    {
+        engine->SetDefaultNamespace( "Tests" );
+        engine->RegisterGlobalProperty( "int Passes", &::Tests::Passes );
+        engine->RegisterGlobalProperty( "int Fails", &::Tests::Fails );
+        engine->SetDefaultNamespace( "" );
+    }
+
     // 7. Dictionary
     RegisterScriptDictionary(engine);
 
