@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build (${{ matrix.os }})
+    name: Build & Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -36,10 +36,28 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential cmake
 
-      - name: Configure CMake
+      - name: Configure CMake (Debug Mode)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build Executable (Debug Mode)
+        run: cmake --build build --config Debug
+
+      - name: Run AngelScript Tests & Doctest Suite
+        shell: bash
+        run: |
+          echo "=========================================="
+          echo " Running AngelScript Tests & Doctest Suite"
+          echo "=========================================="
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./build/Debug/asrun.exe --no-pause --test
+          else
+            ./build/asrun --no-pause --test
+          fi
+
+      - name: Configure CMake (Release Mode)
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build executable
+      - name: Build Executable (Release Mode)
         run: cmake --build build --config Release
 
       - name: Prepare Release Binary
