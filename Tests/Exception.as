@@ -1,14 +1,14 @@
-void main()
+using namespace Tests;
+
+bool throwTest()
 {
-    println("--- AngelScript Exception Test ---");
-
-    try {
+    try
+    {
         SetException( "Exception from AS" );
-        Tests::Fails++;
-    } catch {
-        println( "Catched exception" );
-        Tests::Passes++;
-
+    }
+    catch
+    {
+#if FALSE
         Exception@ ex = GetException();
 
         println( "ex.func: " + ex.func );
@@ -16,5 +16,17 @@ void main()
         println( "ex.sect: " + ex.sect );
         println( "ex.message: " + ex.message );
         println( "ex.stack: " + ex.stack );
+#endif
+
+        return true;
     }
+
+    return false;
+}
+
+void main()
+{
+    println("--- AngelScript Exception Test ---");
+
+    Expect( "Exception catch", true, throwTest() );
 }

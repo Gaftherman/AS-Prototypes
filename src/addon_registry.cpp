@@ -61,6 +61,7 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
         engine->SetDefaultNamespace( "Tests" );
         engine->RegisterGlobalProperty( "int Passes", &::Tests::Passes );
         engine->RegisterGlobalProperty( "int Fails", &::Tests::Fails );
+        engine->RegisterGlobalFunction( "bool Expect( const string&in title, bool expected, bool condition )", asFUNCTION(&::Tests::Expect), asCALL_CDECL );
         engine->SetDefaultNamespace( "" );
     }
 

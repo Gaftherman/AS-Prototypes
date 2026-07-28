@@ -4,10 +4,27 @@
 #include <angelscript.h>
 #include "addons/CString.h"
 
+#include <iostream>
+
 namespace Tests
 {
     inline int Fails = 0;
     inline int Passes = 0;
+    
+    inline bool Expect( const CString& title, bool expected, bool condition )
+    {
+        asIScriptContext* ctx = asGetActiveContext();
+
+        if( ctx != nullptr && expected == condition )
+        {
+            std::cout << "Passed test \"" << title << "\"" << "\n";
+            Tests::Passes++;
+            return true;
+        }
+        std::cerr << "Failed test \"" << title << "\"" << "\n";
+        Tests::Fails++;
+        return false;
+    }
 }
 
 namespace AddonRegistry {

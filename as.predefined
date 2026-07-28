@@ -25,4 +25,9 @@ namespace Tests
     int Fails = 0;
     // Sum if your test passed
     int Passes = 0;
+
+    // Print "Failed/Passed {title}" messages whatever expected is equal to condition.
+    // This updates the Fails & Passes counts accordingly
+    // Return whatever failed or passed.
+    bool Expect( const string&in title, bool expected, bool condition );
 }
