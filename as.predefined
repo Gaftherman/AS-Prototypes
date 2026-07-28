@@ -3,6 +3,21 @@
 void print(const string &in);
 void println(const string &in);
 
+// Raises a generic Exception with the given message
+void SetException( const string&in message, dictionary@ data = null );
+
+class Exception
+{
+    string message;
+    string func;
+    string sect;
+    string stack;
+    int line;
+    dictionary data;
+}
+
+Exception@ GetException();
+
 // Namespace containing API specifically for this project's Tests
 namespace Tests
 {

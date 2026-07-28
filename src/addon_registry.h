@@ -2,6 +2,7 @@
 #define ADDON_REGISTRY_H
 
 #include <angelscript.h>
+#include "addons/CString.h"
 
 namespace Tests
 {

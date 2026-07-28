@@ -14,6 +14,9 @@
 #include <scripthandle/scripthandle.h>
 #include <datetime/datetime.h>
 
+// Our add-ons prototypes
+#include "addons/ASException.hpp"
+
 namespace {
     void ScriptPrint(const std::string &msg) {
         std::cout << msg;
@@ -69,6 +72,8 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
 
     // 9. Script Handles
     RegisterScriptHandle(engine);
+
+    ASException::Register( engine );
 
     return true;
 }
