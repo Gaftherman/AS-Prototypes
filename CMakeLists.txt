@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 project(AngelScriptRunner VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -13,7 +15,16 @@ FetchContent_Declare(
     GIT_TAG        master
     GIT_SHALLOW    TRUE
 )
-FetchContent_MakeAvailable(angelscript)
+
+message(STATUS "Fetching doctest from GitHub...")
+FetchContent_Declare(
+    doctest
+    GIT_REPOSITORY https://github.com/doctest/doctest.git
+    GIT_TAG        v2.4.11
+    GIT_SHALLOW    TRUE
+)
+
+FetchContent_MakeAvailable(angelscript doctest)
 
 set(ANGELSCRIPT_SDK_DIR "${angelscript_SOURCE_DIR}/sdk")
 set(ANGELSCRIPT_INCLUDE_DIR "${ANGELSCRIPT_SDK_DIR}/angelscript/include")
@@ -52,9 +63,10 @@ target_include_directories(asrun PRIVATE
     ${ANGELSCRIPT_INCLUDE_DIR}
     ${ANGELSCRIPT_ADDON_DIR}
     src
+    ${doctest_SOURCE_DIR}
 )
 
-target_link_libraries(asrun PRIVATE angelscript)
+target_link_libraries(asrun PRIVATE angelscript doctest::doctest)
 
 if(MSVC)
     target_compile_options(asrun PRIVATE /W4 /EHsc /D_CRT_SECURE_NO_WARNINGS)
