@@ -1,0 +1,13 @@
+// Currently this is manual writing until i learn how to add the doc strings
+
+void print(const string &in);
+void println(const string &in);
+
+// Namespace containing API specifically for this project's Tests
+namespace Tests
+{
+    // Sum if your test failed
+    int Fails = 0;
+    // Sum if your test passed
+    int Passes = 0;
+}
