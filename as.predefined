@@ -18,6 +18,16 @@ class Exception
 
 Exception@ GetException();
 
+class optional<T>
+{
+    optional();
+    bool has_value() const;
+    void clear();
+    const T& value() const;
+    void set(const T &in value);
+    optional<T>& opAssign(const T &in value);
+}
+
 // Namespace containing API specifically for this project's Tests
 namespace Tests
 {

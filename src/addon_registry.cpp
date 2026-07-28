@@ -16,6 +16,7 @@
 
 // Our add-ons prototypes
 #include "addons/ASException.hpp"
+#include "addons/ASOptional.hpp"
 
 namespace {
     void ScriptPrint(const std::string &msg) {
@@ -75,6 +76,7 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     RegisterScriptHandle(engine);
 
     ASException::Register( engine );
+    ASOptional::Register( engine );
 
     return true;
 }
