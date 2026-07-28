@@ -23,20 +23,46 @@ void MessageCallback(const asSMessageInfo *msg, void *param) {
               << msg->message << "\n";
 }
 
+void PauseConsole() {
+    std::cout << "\n----------------------------------------\n";
+    std::cout << "Presiona ENTER para salir...";
+    std::cout.flush();
+    std::string dummy;
+    std::getline(std::cin, dummy);
+}
+
 int main(int argc, char **argv) {
-    if (argc < 2) {
-        std::cout << "AngelScript CLI Runner (asrun)\n";
-        std::cout << "Usage: asrun <path/to/script.as> [script_args...]\n\n";
-        std::cout << "Executes AngelScript files with standard add-ons registered.\n";
+    bool shouldPause = true;
+
+    // Check for --no-pause flag
+    std::vector<std::string> cleanArgs;
+    for (int i = 0; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--no-pause") {
+            shouldPause = false;
+        } else {
+            cleanArgs.push_back(arg);
+        }
+    }
+
+    if (cleanArgs.size() < 2) {
+        std::cout << "========================================\n";
+        std::cout << "   AngelScript CLI Runner (asrun)\n";
+        std::cout << "========================================\n\n";
+        std::cout << "Uso: asrun <archivo.as> [--no-pause] [argumentos_del_script...]\n\n";
+        std::cout << "Tambien puedes arrastrar un archivo .as directamente sobre el ejecutable.\n";
+        
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
-    std::string scriptPath = argv[1];
+    std::string scriptPath = cleanArgs[1];
 
     // 1. Create script engine
     asIScriptEngine *engine = asCreateScriptEngine();
     if (!engine) {
         std::cerr << "Failed to create AngelScript engine.\n";
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
@@ -45,6 +71,7 @@ int main(int argc, char **argv) {
     if (r < 0) {
         std::cerr << "Failed to set engine message callback.\n";
         engine->Release();
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
@@ -52,6 +79,7 @@ int main(int argc, char **argv) {
     if (!AddonRegistry::RegisterAllAddons(engine)) {
         std::cerr << "Failed to register AngelScript add-ons.\n";
         engine->Release();
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
@@ -61,6 +89,7 @@ int main(int argc, char **argv) {
     if (r < 0) {
         std::cerr << "Failed to start new script module.\n";
         engine->Release();
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
@@ -68,6 +97,7 @@ int main(int argc, char **argv) {
     if (r < 0) {
         std::cerr << "Could not load or find script file: " << scriptPath << "\n";
         engine->Release();
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
@@ -75,6 +105,7 @@ int main(int argc, char **argv) {
     if (r < 0) {
         std::cerr << "Script compilation failed. Check message output above.\n";
         engine->Release();
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
@@ -87,6 +118,7 @@ int main(int argc, char **argv) {
     if (!func) {
         std::cerr << "Entry point 'void main()' or 'int main()' not found in script.\n";
         engine->Release();
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
@@ -95,6 +127,7 @@ int main(int argc, char **argv) {
     if (!ctx) {
         std::cerr << "Failed to create execution context.\n";
         engine->Release();
+        if (shouldPause) PauseConsole();
         return 1;
     }
 
@@ -103,10 +136,11 @@ int main(int argc, char **argv) {
     // If main accepts arguments array<string>@
     if (func->GetParamCount() == 1) {
         asITypeInfo *arrayType = engine->GetTypeInfoByDecl("array<string>");
-        CScriptArray *argArray = CScriptArray::Create(arrayType, argc - 2);
-        for (int i = 2; i < argc; ++i) {
-            std::string argStr = argv[i];
-            argArray->SetValue(i - 2, &argStr);
+        size_t scriptArgCount = cleanArgs.size() - 2;
+        CScriptArray *argArray = CScriptArray::Create(arrayType, static_cast<asUINT>(scriptArgCount));
+        for (size_t i = 2; i < cleanArgs.size(); ++i) {
+            std::string argStr = cleanArgs[i];
+            argArray->SetValue(static_cast<asUINT>(i - 2), &argStr);
         }
         ctx->SetArgObject(0, argArray);
         argArray->Release();
@@ -134,6 +168,10 @@ int main(int argc, char **argv) {
 
     ctx->Release();
     engine->ShutDownAndRelease();
+
+    if (shouldPause) {
+        PauseConsole();
+    }
 
     return exitCode;
 }
