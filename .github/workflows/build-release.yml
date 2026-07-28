@@ -1,0 +1,49 @@
+name: Build & Release AngelScript Runner
+
+on:
+  push:
+    branches: [ master, main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build asrun.exe (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build executable
+        run: cmake --build build --config Release
+
+      - name: Verify build artifact
+        shell: powershell
+        run: |
+          if (Test-Path "build/Release/asrun.exe") {
+              Write-Host "asrun.exe built successfully!"
+          } else {
+              Write-Error "asrun.exe was not found in build/Release/"
+              exit 1
+          }
+
+      - name: Upload Executable Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: asrun-windows-x64
+          path: build/Release/asrun.exe
+
+      - name: Create GitHub Release Assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/Release/asrun.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
