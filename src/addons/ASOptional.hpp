@@ -225,23 +225,23 @@ class ASOptional
 
         static inline void Register( asIScriptEngine* engine )
         {
-            REGISTER_OBJECT_TYPE( engine, "optional<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE, "Generic container that may or may not contain a value of type T." );
-            REGISTER_OBJECT_BEHAVIOUR( engine, "optional<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(ASOptional, AddRef), asCALL_THISCALL, "Increments the reference count of the optional container." );
-            REGISTER_OBJECT_BEHAVIOUR( engine, "optional<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(ASOptional, Release), asCALL_THISCALL, "Decrements the reference count and destroys the optional when 0." );
+            REGISTER_OBJECT_TYPE( "optional<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE, "Generic container that may or may not contain a value of type T." );
+            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(ASOptional, AddRef), asCALL_THISCALL, "Increments the reference count of the optional container." );
+            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(ASOptional, Release), asCALL_THISCALL, "Decrements the reference count and destroys the optional when 0." );
 
             // Default constructor
-            REGISTER_OBJECT_BEHAVIOUR( engine, "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in)",
+            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in)",
                 asFUNCTION((ASOptional*(*)(asITypeInfo*))ASOptional::Factory), asCALL_CDECL, "Constructs an empty optional container." );
 
-            REGISTER_OBJECT_BEHAVIOUR( engine, "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const T &in value)",
+            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const T &in value)",
                 asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryWithValue), asCALL_CDECL, "Constructs an optional container initialized with a value." );
 
-            REGISTER_OBJECT_METHOD( engine, "optional<T>", "bool has_value() const", asMETHOD(ASOptional, HasValue), asCALL_THISCALL, "Returns true if the optional contains a value, false otherwise." );
-            REGISTER_OBJECT_METHOD( engine, "optional<T>", "void clear()", asMETHOD(ASOptional, Clear), asCALL_THISCALL, "Clears the contained value and resets the optional to an empty state." );
-            REGISTER_OBJECT_METHOD( engine, "optional<T>", "const T& value() const", asFUNCTION(ASOptional::GetValueWrapper), asCALL_CDECL_OBJFIRST, "Returns a reference to the contained value. Throws a script exception if empty." );
-            REGISTER_OBJECT_METHOD( engine, "optional<T>", "void set(const T &in value)", asFUNCTION(ASOptional::SetValueWrapper), asCALL_CDECL_OBJFIRST, "Sets the value contained in the optional." );
+            REGISTER_OBJECT_METHOD( "optional<T>", "bool has_value() const", asMETHOD(ASOptional, HasValue), asCALL_THISCALL, "Returns true if the optional contains a value, false otherwise." );
+            REGISTER_OBJECT_METHOD( "optional<T>", "void clear()", asMETHOD(ASOptional, Clear), asCALL_THISCALL, "Clears the contained value and resets the optional to an empty state." );
+            REGISTER_OBJECT_METHOD( "optional<T>", "const T& value() const", asFUNCTION(ASOptional::GetValueWrapper), asCALL_CDECL_OBJFIRST, "Returns a reference to the contained value. Throws a script exception if empty." );
+            REGISTER_OBJECT_METHOD( "optional<T>", "void set(const T &in value)", asFUNCTION(ASOptional::SetValueWrapper), asCALL_CDECL_OBJFIRST, "Sets the value contained in the optional." );
 
-            REGISTER_OBJECT_METHOD( engine, "optional<T>", "optional<T>& opAssign(const T &in value)",
+            REGISTER_OBJECT_METHOD( "optional<T>", "optional<T>& opAssign(const T &in value)",
                 asFUNCTION(ASOptional::AssignValueWrapper), asCALL_CDECL_OBJFIRST, "Assigns a new value to the optional container." );
         }
 

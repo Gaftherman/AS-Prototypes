@@ -260,13 +260,17 @@ uint fpToIEEE(float);
 double fpFromIEEE(uint64);
 uint64 fpToIEEE(double);
 bool closeTo(float, float, float = 0.00001f);
+/// Prints a string to the console output followed by a newline.
 bool closeTo(double, double, double = 0.0000000001);
 float cos(float);
+/// Disposes of the given script object handle.
 float sin(float);
+/// Raises a script exception with an optional metadata dictionary.
 float tan(float);
 float acos(float);
 float asin(float);
 float atan(float);
+/// Returns the current active exception object.
 float atan2(float, float);
 float cosh(float);
 float sinh(float);

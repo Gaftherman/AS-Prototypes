@@ -33,28 +33,28 @@ int RegisterObjectBehaviourWithComment(asIScriptEngine* engine, const char* obj,
 int RegisterObjectPropertyWithComment(asIScriptEngine* engine, const char* obj, const char* declaration, int byteOffset, const char* comment = nullptr);
 int RegisterGlobalPropertyWithComment(asIScriptEngine* engine, const char* declaration, void* pointer, const char* comment = nullptr);
 
-#define REGISTER_OBJECT_TYPE(engine, obj, byteSize, flags, comment) \
+#define REGISTER_OBJECT_TYPE(obj, byteSize, flags, comment) \
     RegisterObjectTypeWithComment(engine, obj, byteSize, flags, comment)
 
-#define REGISTER_ENUM(engine, type, comment) \
+#define REGISTER_ENUM(type, comment) \
     RegisterEnumWithComment(engine, type, comment)
 
-#define REGISTER_ENUM_VALUE(engine, type, valName, val, comment) \
+#define REGISTER_ENUM_VALUE(type, valName, val, comment) \
     RegisterEnumValueWithComment(engine, type, valName, val, comment)
 
-#define REGISTER_OBJECT_METHOD(engine, obj, decl, funcPtr, callConv, comment) \
+#define REGISTER_OBJECT_METHOD(obj, decl, funcPtr, callConv, comment) \
     RegisterObjectMethodWithComment(engine, obj, decl, funcPtr, callConv, comment)
 
-#define REGISTER_GLOBAL_FUNCTION(engine, decl, funcPtr, callConv, comment) \
+#define REGISTER_GLOBAL_FUNCTION(decl, funcPtr, callConv, comment) \
     RegisterGlobalFunctionWithComment(engine, decl, funcPtr, callConv, comment)
 
-#define REGISTER_OBJECT_BEHAVIOUR(engine, obj, behaviour, decl, funcPtr, callConv, comment) \
+#define REGISTER_OBJECT_BEHAVIOUR(obj, behaviour, decl, funcPtr, callConv, comment) \
     RegisterObjectBehaviourWithComment(engine, obj, behaviour, decl, funcPtr, callConv, comment)
 
-#define REGISTER_OBJECT_PROPERTY(engine, obj, decl, byteOffset, comment) \
+#define REGISTER_OBJECT_PROPERTY(obj, decl, byteOffset, comment) \
     RegisterObjectPropertyWithComment(engine, obj, decl, byteOffset, comment)
 
-#define REGISTER_GLOBAL_PROPERTY(engine, decl, pointer, comment) \
+#define REGISTER_GLOBAL_PROPERTY(decl, pointer, comment) \
     RegisterGlobalPropertyWithComment(engine, decl, pointer, comment)
 
 // Generates as.predefined file containing defined symbols for language server

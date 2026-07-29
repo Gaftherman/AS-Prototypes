@@ -55,16 +55,16 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     RegisterScriptFileSystem(engine);
 
     // 6. Console I/O functions
-    r = REGISTER_GLOBAL_FUNCTION(engine, "void print(const string &in)", asFUNCTION(ScriptPrint), asCALL_CDECL, "Prints a string to the console output.");
+    r = REGISTER_GLOBAL_FUNCTION("void print(const string &in)", asFUNCTION(ScriptPrint), asCALL_CDECL, "Prints a string to the console output.");
     if (r < 0) return false;
-    r = REGISTER_GLOBAL_FUNCTION(engine, "void println(const string &in)", asFUNCTION(ScriptPrintln), asCALL_CDECL, "Prints a string to the console output followed by a newline.");
+    r = REGISTER_GLOBAL_FUNCTION("void println(const string &in)", asFUNCTION(ScriptPrintln), asCALL_CDECL, "Prints a string to the console output followed by a newline.");
     if (r < 0) return false;
 
     {
         engine->SetDefaultNamespace( "Tests" );
-        REGISTER_GLOBAL_PROPERTY(engine, "int Passes", &::Tests::Passes, "Number of passed test assertions.");
-        REGISTER_GLOBAL_PROPERTY(engine, "int Fails", &::Tests::Fails, "Number of failed test assertions.");
-        REGISTER_GLOBAL_FUNCTION(engine, "bool Expect( const string&in title, bool expected, bool condition )", asFUNCTION(&::Tests::Expect), asCALL_CDECL, "Tests an assertion condition and increments pass/fail counters." );
+        REGISTER_GLOBAL_PROPERTY("int Passes", &::Tests::Passes, "Number of passed test assertions.");
+        REGISTER_GLOBAL_PROPERTY("int Fails", &::Tests::Fails, "Number of failed test assertions.");
+        REGISTER_GLOBAL_FUNCTION("bool Expect( const string&in title, bool expected, bool condition )", asFUNCTION(&::Tests::Expect), asCALL_CDECL, "Tests an assertion condition and increments pass/fail counters." );
         engine->SetDefaultNamespace( "" );
     }
 
