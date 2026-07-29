@@ -48,4 +48,11 @@ void main()
     Expect( "json::dumps with replace mode", true, json::dumps( objInvalidCharacter, json::error_handler::replace ) != "" );
     Expect( "json::dumps with ignore mode", true, json::dumps( objInvalidCharacter, json::error_handler::ignore ) != "" );
 #endif
+
+    JSON@ objConst = JSON();
+    Expect( "JSON::ToString() const", true, objConst.ToString() == "null" );
+    Expect( "JSON::ToString() (null internal json)", true, JSON().ToString() == "null" );
+    @objConst = json::loads( "[1]" );
+    Expect( "JSON::ToString() valid", true, objConst.ToString() == "[1]" );
+
 }

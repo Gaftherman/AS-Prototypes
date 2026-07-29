@@ -158,6 +158,11 @@ class ASJSON
         }
 #endif
 
+        CString ToString()
+        {
+            return ASJSON::dumps(this, -1, static_cast<int>(nlohmann::json::error_handler_t::replace) );
+        }
+
         static inline void Register( asIScriptEngine* engine )
         {
             engine->RegisterObjectType( "JSON", 0, asOBJ_REF );
@@ -191,6 +196,9 @@ class ASJSON
                 // Write a serialized representation of the given object in the given file.
                 engine->RegisterGlobalFunction( "bool dump( const JSON@ obj, const string&in filePath, int indents = -1, error_handler errors = error_handler::strict )", asFUNCTION(ASJSON::dump), asCALL_CDECL );
 #endif
+
+                // Alias to json::dumps using indents -1 and error_handler_t::ignore. this is exception-safe to print or debug in AS
+                engine->RegisterObjectMethod( "JSON", "string ToString() const", asMETHOD(ASJSON, ToString), asCALL_THISCALL );
             }
             engine->SetDefaultNamespace( "" );
         }
