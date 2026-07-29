@@ -17,6 +17,7 @@
 // Our add-ons prototypes
 #include "addons/ASDispose.hpp"
 #include "addons/ASException.hpp"
+#include "addons/ASJSON.hpp"
 #include "addons/ASOptional.hpp"
 
 namespace {
@@ -79,6 +80,7 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     ASException::Register( engine );
     ASOptional::Register( engine );
     ASDispose::Register( engine );
+    ASJSON::Register( engine );
 
     return true;
 }

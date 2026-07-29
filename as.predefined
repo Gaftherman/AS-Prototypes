@@ -30,6 +30,36 @@ class optional<T>
 
 bool Dispose( ?&in obj );
 
+class JSON
+{
+}
+
+namespace json
+{
+    // Error handlers for dump/s
+    enum error_handler
+    {
+        // throw a type_error exception in case of invalid UTF-8
+        strict,
+        // replace invalid UTF-8 sequences with U+FFFD
+        replace,
+        // ignore invalid UTF-8 sequences
+        ignore
+    };
+
+    // Load and parse json using the FileSystem
+    JSON@ load( const string&in filePath, bool ignore_comments = true );
+
+    // Load and parse json using string
+    JSON@ loads( const string&in serialized, bool ignore_comments = true );
+
+    // Return a string representing the serialized given object
+    string dumps( const JSON@ obj, int indents = -1, error_handler errors = error_handler::strict );
+
+    // Write a serialized representation of the given object in the given file.
+    bool dump( const JSON@ obj, const string&in filePath, int indents = -1, error_handler errors = error_handler::strict );
+}
+
 // Namespace containing API specifically for this project's Tests
 namespace Tests
 {
