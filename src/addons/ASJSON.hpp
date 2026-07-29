@@ -6,6 +6,9 @@
 #include <iostream>
 #include <sstream>
 
+// define to use json::dump/json::load (Requires implementation of Game's FileSystem.)
+#define ASJSON_GAME_FILE_SYSTEM 0
+
 class ASJSON
 {
     protected:
@@ -70,6 +73,7 @@ class ASJSON
             return false;
         }
 
+#if ASJSON_GAME_FILE_SYSTEM
         static bool dump( const ASJSON* obj, const CString& filePath, int indents = -1, int error_handler = __error_handler_default__ )
         {
             asIScriptContext* ctx = asGetActiveContext();
@@ -86,6 +90,7 @@ class ASJSON
             }
             return false;
         }
+#endif
 
         static CString dumps( const ASJSON* obj, int indents = -1, int error_handler = __error_handler_default__ )
         {
@@ -130,6 +135,7 @@ class ASJSON
             return nullptr;
         }
 
+#if ASJSON_GAME_FILE_SYSTEM
         static ASJSON* load( const CString& filePath )
         {
             asIScriptContext* ctx = asGetActiveContext();
@@ -150,6 +156,7 @@ class ASJSON
 
             return ASJSON::loads( serialized );
         }
+#endif
 
         static inline void Register( asIScriptEngine* engine )
         {
@@ -162,9 +169,10 @@ class ASJSON
             // Methods in json namespace.
             engine->SetDefaultNamespace( "json" );
             {
+#if ASJSON_GAME_FILE_SYSTEM
                 // Load and parse json using the FileSystem
                 engine->RegisterGlobalFunction( "JSON@ load( const string&in filePath, bool ignore_comments = true )", asFUNCTION(ASJSON::load), asCALL_CDECL );
-
+#endif
                 // Load and parse json using string
                 engine->RegisterGlobalFunction( "JSON@ loads( const string&in serialized, bool ignore_comments = true )", asFUNCTION(ASJSON::loads), asCALL_CDECL );
 
@@ -179,8 +187,10 @@ class ASJSON
 
                 // Return a string representing the serialized given object
                 engine->RegisterGlobalFunction( "string dumps( const JSON@ obj, int indents = -1, error_handler errors = error_handler::strict )", asFUNCTION(ASJSON::dumps), asCALL_CDECL );
+#if ASJSON_GAME_FILE_SYSTEM
                 // Write a serialized representation of the given object in the given file.
                 engine->RegisterGlobalFunction( "bool dump( const JSON@ obj, const string&in filePath, int indents = -1, error_handler errors = error_handler::strict )", asFUNCTION(ASJSON::dump), asCALL_CDECL );
+#endif
             }
             engine->SetDefaultNamespace( "" );
         }
