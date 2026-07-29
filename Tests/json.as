@@ -62,4 +62,29 @@ void main()
     Expect( "JSON::JSON( bool )", true, @JSON(true) !is null );
     Expect( "JSON::JSON( string )", true, @JSON("empty") !is null );
     Expect( "JSON::JSON( string, serialized )", true, @JSON("{}", true) !is null );
+
+
+    array<int> arrint = { -1 };
+    @obj = JSON(arrint);
+    Expect( "JSON::JSON( array<int> )", true, obj !is null && obj.to_string() == "[-1]" );
+
+    array<uint> arruint = { -1 };
+    @obj = JSON(arruint);
+    Expect( "JSON::JSON( array<uint> )", true, obj !is null && obj.to_string() == "[0]" );
+
+    array<bool> arrbool = { true };
+    @obj = JSON(arrbool);
+    Expect( "JSON::JSON( array<bool> )", true, obj !is null && obj.to_string() == "[true]" );
+
+    array<float> arrfloat = { 0.5f };
+    @obj = JSON(arrfloat);
+    Expect( "JSON::JSON( array<float> )", true, obj !is null && obj.to_string() == "[0.5]" );
+
+    array<double> arrdouble = { 0.123456789012345 };
+    @obj = JSON(arrdouble);
+    Expect( "JSON::JSON( array<double> )", true, obj !is null && obj.to_string() == "[0.123456789012345]" );
+
+    array<string> arrstring = { "string" };
+    @obj = JSON(arrstring);
+    Expect( "JSON::JSON( array<string> )", true, obj !is null && obj.to_string() == "[\"string\"]" );
 }

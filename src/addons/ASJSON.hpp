@@ -73,15 +73,7 @@ class ASJSON
         {
             if( isSerialized )
             {
-                ASJSON* obj = ASJSON::loads( value );
-
-                // In case loads return null create a new fresh object.
-                if(  obj != nullptr )
-                {
-                    return obj;
-                }
-
-                return new ASJSON();
+                return ASJSON::loads( value );
             }
 
             ASJSON* obj = new ASJSON();
@@ -90,6 +82,85 @@ class ASJSON
 
             return obj;
         }
+
+// array<T> factory register type
+#define JSONFactoryArrayDECL(type) engine->RegisterObjectBehaviour( "JSON", asBEHAVE_FACTORY, "JSON@ f(const array<" #type ">&in)", asFUNCTION(ASJSON::JSONFactoryArray), asCALL_CDECL )
+
+        // array<T> factory
+        static ASJSON* JSONFactoryArray( CScriptArray* arr )
+        {
+            asIScriptContext* ctx = asGetActiveContext();
+            asIScriptEngine* engine = ctx->GetEngine();
+
+            if( ctx == nullptr || engine == nullptr )
+                return nullptr;
+
+            if( arr == nullptr )
+            {
+                ctx->SetException( "JSON: null pointer array" );
+                return nullptr;
+            }
+
+            ASJSON* obj = new ASJSON();
+
+            obj->m_json = nlohmann::json::array();
+
+            int typeId = arr->GetElementTypeId();
+            int size = arr->GetSize();
+
+            for( int i = 0; i < size; ++i )
+            {
+                void* ptr = arr->At(i);
+
+                switch( typeId )
+                {
+                    case asTYPEID_INT32:
+                    {
+                        obj->m_json.push_back( *(int*)ptr );
+                        continue;
+                    }
+                    case asTYPEID_UINT32:
+                    {
+                        int val = *(int*)ptr; // Lazy asign here
+                        obj->m_json.push_back( val > 0 ? val : 0 );
+                        continue;
+                    }
+                    case asTYPEID_FLOAT:
+                    {
+                        obj->m_json.push_back( *(float*)ptr );
+                        continue;
+                    }
+                    case asTYPEID_DOUBLE:
+                    {
+                        obj->m_json.push_back( *(double*)ptr );
+                        continue;
+                    }
+                    case asTYPEID_BOOL:
+                    {
+                        obj->m_json.push_back( *(bool*)ptr );
+                        continue;
+                    }
+                    default:
+                    {
+                        if( typeId == engine->GetTypeIdByDecl( "string" ) )
+                        {
+                            obj->m_json.push_back( std::string( *(CString*)ptr ) );
+                        }
+                        else
+                        {
+                            if( ctx ) ctx->SetException( "JSON: unsupported array type" );
+                            delete obj;
+                            return nullptr;
+                        }
+                    }
+                }
+            }
+
+            return obj;
+        }
+        // ==================================================================
+        // END OF FACTORY
+        // ==================================================================
 
         // Store the default enum value in here in case it changes and avoid constantly casting.
         static const int __error_handler_default__ = static_cast<int>( nlohmann::json::error_handler_t::strict );
@@ -258,6 +329,14 @@ class ASJSON
             engine->RegisterObjectBehaviour( "JSON", asBEHAVE_FACTORY, "JSON@ f( int value )", asFUNCTION(ASJSON::JSONFactoryInt), asCALL_CDECL );
             engine->RegisterObjectBehaviour( "JSON", asBEHAVE_FACTORY, "JSON@ f( float value )", asFUNCTION(ASJSON::JSONFactoryFloat), asCALL_CDECL );
             engine->RegisterObjectBehaviour( "JSON", asBEHAVE_FACTORY, "JSON@ f( bool value )", asFUNCTION(ASJSON::JSONFactoryBool), asCALL_CDECL );
+
+            // array<T> register factory (Not dynamic)
+            JSONFactoryArrayDECL(int);
+            JSONFactoryArrayDECL(uint);
+            JSONFactoryArrayDECL(bool);
+            JSONFactoryArrayDECL(float);
+            JSONFactoryArrayDECL(string);
+            JSONFactoryArrayDECL(double);
 
             // Methods in json namespace.
             engine->SetDefaultNamespace( "json" );
