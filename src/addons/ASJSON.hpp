@@ -164,6 +164,40 @@ class ASJSON
             return ASJSON::dumps(this, -1, static_cast<int>(nlohmann::json::error_handler_t::replace) );
         }
 
+        bool is_null() const {
+            return this->m_json.is_null();
+        }
+        bool is_boolean() const {
+            return this->m_json.is_boolean();
+        }
+        bool is_number() const {
+            return this->m_json.is_number();
+        }
+        bool is_number_integer() const {
+            return this->m_json.is_number_integer();
+        }
+        bool is_number_unsigned() const {
+            return this->m_json.is_number_unsigned();
+        }
+        bool is_number_float() const {
+            return this->m_json.is_number_float();
+        }
+        bool is_object() const {
+            return this->m_json.is_object();
+        }
+        bool is_array() const {
+            return this->m_json.is_array();
+        }
+        bool is_string() const {
+            return this->m_json.is_string();
+        }
+        bool is_primitive() const {
+            return this->m_json.is_primitive();
+        }
+        bool is_structured() const {
+            return this->m_json.is_structured();
+        }
+
         static inline void Register( asIScriptEngine* engine )
         {
             engine->RegisterObjectType( "JSON", 0, asOBJ_REF );
@@ -203,6 +237,19 @@ class ASJSON
 
                 // when false; JSON will silent fail. when true; JSON will raise exceptions.
                 engine->RegisterObjectProperty( "JSON", "bool strict", asOFFSET(ASJSON, strict) );
+
+                engine->RegisterObjectMethod( "JSON", "bool is_null() const", asMETHOD(ASJSON, is_null), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_boolean() const", asMETHOD(ASJSON, is_boolean), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_number() const", asMETHOD(ASJSON, is_number), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_number_integer() const", asMETHOD(ASJSON, is_number_integer), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_number_unsigned() const", asMETHOD(ASJSON, is_number_unsigned), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_number_float() const", asMETHOD(ASJSON, is_number_float), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_object() const", asMETHOD(ASJSON, is_object), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_array() const", asMETHOD(ASJSON, is_array), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_string() const", asMETHOD(ASJSON, is_string), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "bool is_primitive() const", asMETHOD(ASJSON, is_primitive), asCALL_THISCALL );
+                // Either json object or array
+                engine->RegisterObjectMethod( "JSON", "bool is_structured() const", asMETHOD(ASJSON, is_structured), asCALL_THISCALL );
 
             }
             engine->SetDefaultNamespace( "" );

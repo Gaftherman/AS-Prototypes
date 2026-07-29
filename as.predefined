@@ -37,6 +37,19 @@ class JSON
 
     // Alias to json::dumps using indents -1 and error_handler_t::ignore. this is exception-safe to print or debug in AS
     string to_string() const;
+
+    bool is_null() const;
+    bool is_boolean() const;
+    bool is_number() const;
+    bool is_number_integer() const;
+    bool is_number_unsigned() const;
+    bool is_number_float() const;
+    bool is_object() const;
+    bool is_array() const;
+    bool is_string() const;
+    bool is_primitive() const;
+    // Either json object or array
+    bool is_structured() const;
 }
 
 namespace json
