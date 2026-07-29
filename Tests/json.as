@@ -56,4 +56,10 @@ void main()
     Expect( "JSON::to_string() valid", true, obj.to_string() == "[1]" );
 
     Expect( "JSON::strict default true", true, obj.strict );
+
+    Expect( "JSON::JSON( float )", true, @JSON(1.0f) !is null );
+    Expect( "JSON::JSON( int )", true, @JSON(1) !is null );
+    Expect( "JSON::JSON( bool )", true, @JSON(true) !is null );
+    Expect( "JSON::JSON( string )", true, @JSON("empty") !is null );
+    Expect( "JSON::JSON( string, serialized )", true, @JSON("{}", true) !is null );
 }

@@ -32,6 +32,13 @@ bool Dispose( ?&in obj );
 
 class JSON
 {
+    // Factory
+    JSON@ JSON();
+    JSON@ JSON( const string &in value, bool isSerialized = false );
+    JSON@ JSON( int value );
+    JSON@ JSON( float value );
+    JSON@ JSON( bool value );
+
     // when false; JSON will silent fail. when true; JSON will raise exceptions.
     bool strict;
 
