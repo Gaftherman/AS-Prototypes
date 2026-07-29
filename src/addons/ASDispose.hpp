@@ -26,6 +26,6 @@ namespace ASDispose
 
     static inline void Register( asIScriptEngine* engine )
     {
-        engine->RegisterGlobalFunction( "bool Dispose( ?&out )", asFUNCTION(&ASDispose::Dispose), asCALL_CDECL );
+        REGISTER_GLOBAL_FUNCTION( engine, "bool Dispose( ?&out )", asFUNCTION(&ASDispose::Dispose), asCALL_CDECL, "Disposes of the given script object handle." );
     }
 }

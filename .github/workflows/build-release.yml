@@ -70,12 +70,17 @@ jobs:
             cp build/asrun bin/asrun-linux-x64
             chmod +x bin/asrun-linux-x64
           fi
+          if [ -f as.predefined ]; then
+            cp as.predefined bin/as.predefined
+          fi
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: bin/${{ matrix.binary_name }}
+          path: |
+            bin/${{ matrix.binary_name }}
+            bin/as.predefined
 
   release:
     name: Create GitHub Release
@@ -106,6 +111,7 @@ jobs:
           files: |
             release_files/asrun-windows-x64.exe
             release_files/asrun-linux-x64
+            release_files/as.predefined
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

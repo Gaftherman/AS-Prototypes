@@ -107,21 +107,21 @@ class ASException
 
         static inline void Register( asIScriptEngine* engine )
         {
-            engine->RegisterObjectType( "Exception", 0, asOBJ_REF );
-            engine->RegisterObjectBehaviour( "Exception", asBEHAVE_ADDREF, "void f()", asMETHOD(ASException, AddRef), asCALL_THISCALL );
-            engine->RegisterObjectBehaviour( "Exception", asBEHAVE_RELEASE, "void f()", asMETHOD(ASException, Release), asCALL_THISCALL );
+            REGISTER_OBJECT_TYPE( engine, "Exception", 0, asOBJ_REF, "Exception object storing callstack, line number, message, and metadata." );
+            REGISTER_OBJECT_BEHAVIOUR( engine, "Exception", asBEHAVE_ADDREF, "void f()", asMETHOD(ASException, AddRef), asCALL_THISCALL, "Increments reference count of Exception." );
+            REGISTER_OBJECT_BEHAVIOUR( engine, "Exception", asBEHAVE_RELEASE, "void f()", asMETHOD(ASException, Release), asCALL_THISCALL, "Decrements reference count of Exception." );
 
-            engine->RegisterObjectProperty("Exception", "string message", asOFFSET(ASException, message));
-            engine->RegisterObjectProperty("Exception", "string func", asOFFSET(ASException, func) );
-            engine->RegisterObjectProperty("Exception", "string sect", asOFFSET(ASException, sect) );
-            engine->RegisterObjectProperty("Exception", "string stack", asOFFSET(ASException, stack) );
-            engine->RegisterObjectProperty("Exception", "int line", asOFFSET(ASException, line) );
-            engine->RegisterObjectProperty("Exception", "dictionary data", asOFFSET(ASException, data) );
+            REGISTER_OBJECT_PROPERTY( engine, "Exception", "string message", asOFFSET(ASException, message), "Exception error message string." );
+            REGISTER_OBJECT_PROPERTY( engine, "Exception", "string func", asOFFSET(ASException, func), "Function declaration where exception occurred." );
+            REGISTER_OBJECT_PROPERTY( engine, "Exception", "string sect", asOFFSET(ASException, sect), "Script section or file name where exception occurred." );
+            REGISTER_OBJECT_PROPERTY( engine, "Exception", "string stack", asOFFSET(ASException, stack), "Call stack trace at the moment exception occurred." );
+            REGISTER_OBJECT_PROPERTY( engine, "Exception", "int line", asOFFSET(ASException, line), "Script line number where exception occurred." );
+            REGISTER_OBJECT_PROPERTY( engine, "Exception", "dictionary data", asOFFSET(ASException, data), "Additional contextual data dictionary attached to exception." );
 
-            // Raise a exception with additional information stored in data if needed.
-            engine->RegisterGlobalFunction( "void SetException( const string&in exception, dictionary@ data = null )", asFUNCTION(ASException::RaiseException), asCALL_CDECL );
+            // Raise an exception with additional information stored in data if needed.
+            REGISTER_GLOBAL_FUNCTION( engine, "void SetException( const string&in exception, dictionary@ data = null )", asFUNCTION(ASException::RaiseException), asCALL_CDECL, "Raises a script exception with an optional metadata dictionary." );
 
             // Get exception
-            engine->RegisterGlobalFunction( "Exception@ GetException()", asFUNCTION(ASException::GetException), asCALL_CDECL );
+            REGISTER_GLOBAL_FUNCTION( engine, "Exception@ GetException()", asFUNCTION(ASException::GetException), asCALL_CDECL, "Returns the current active exception object." );
         }
 };

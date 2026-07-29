@@ -3,6 +3,7 @@
 
 #include <angelscript.h>
 #include "addons/CString.h"
+#include "as_predefined.h"
 
 #include <iostream>
 

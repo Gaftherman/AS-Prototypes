@@ -1,0 +1,513 @@
+// Reference: https://github.com/sashi0034/angel-lsp/blob/main/examples/generate_as_predefined.cpp
+
+#include "as_predefined.h"
+
+#include <cassert>
+#include <format>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <filesystem>
+#include <unordered_map>
+#include <map>
+#include <vector>
+
+namespace ASDoc
+{
+    // Storage maps for doc comments inside ASDoc namespace
+    static std::unordered_map<std::string, std::string> g_objectTypeComments; // Key: obj name
+    static std::unordered_map<std::string, std::string> g_enumComments; // Key: enum name
+    static std::unordered_map<std::string, std::string> g_enumValueComments; // Key: "EnumName::ValName"
+    static std::unordered_map<const asIScriptFunction*, std::string> g_globalFunctionComments;
+    static std::unordered_map<std::string, std::string> g_scopedMethodComments; // Key: "TypeName::Decl"
+    static std::unordered_map<std::string, std::string> g_propertyComments; // Key: "TypeName::PropName"
+    static std::unordered_map<std::string, std::string> g_globalPropertyComments; // Key: "PropName"
+
+    template <class Stream>
+    void printComment(Stream& stream, const std::string& comment, const std::string& indent = "")
+    {
+        if (comment.empty()) return;
+        std::istringstream iss(comment);
+        std::string line;
+        while (std::getline(iss, line))
+        {
+            stream << indent << "/// " << line << "\n";
+        }
+    }
+
+    void RegisterObjectTypeComment(const std::string& obj, const std::string& comment)
+    {
+        if (!obj.empty() && !comment.empty())
+        {
+            g_objectTypeComments[obj] = comment;
+        }
+    }
+
+    void RegisterEnumComment(const std::string& enumName, const std::string& comment)
+    {
+        if (!enumName.empty() && !comment.empty())
+        {
+            g_enumComments[enumName] = comment;
+        }
+    }
+
+    void RegisterEnumValueComment(const std::string& enumName, const std::string& valName, const std::string& comment)
+    {
+        if (!enumName.empty() && !valName.empty() && !comment.empty())
+        {
+            std::string key = enumName + "::" + valName;
+            g_enumValueComments[key] = comment;
+        }
+    }
+
+    void RegisterFunctionComment(asIScriptFunction* func, const std::string& comment)
+    {
+        if (func && !comment.empty())
+        {
+            if (func->GetObjectType() != nullptr)
+            {
+                std::string key = std::string(func->GetObjectType()->GetName()) + "::" + func->GetDeclaration(false, true, true);
+                g_scopedMethodComments[key] = comment;
+            }
+            else
+            {
+                g_globalFunctionComments[func] = comment;
+            }
+        }
+    }
+
+    void RegisterScopedFunctionComment(const asITypeInfo* type, asIScriptFunction* func, const std::string& comment)
+    {
+        if (!comment.empty())
+        {
+            if (type && func)
+            {
+                std::string key = std::string(type->GetName()) + "::" + func->GetDeclaration(false, true, true);
+                g_scopedMethodComments[key] = comment;
+            }
+            else if (func)
+            {
+                g_globalFunctionComments[func] = comment;
+            }
+        }
+    }
+
+    void RegisterPropertyComment(const asITypeInfo* type, const std::string& propName, const std::string& comment)
+    {
+        if (type && !propName.empty() && !comment.empty())
+        {
+            std::string key = std::string(type->GetName()) + "::" + propName;
+            g_propertyComments[key] = comment;
+        }
+    }
+
+    void RegisterGlobalPropertyComment(const std::string& propName, const std::string& comment)
+    {
+        if (!propName.empty() && !comment.empty())
+        {
+            g_globalPropertyComments[propName] = comment;
+        }
+    }
+
+    std::string GetObjectTypeComment(const asITypeInfo* type)
+    {
+        if (!type) return "";
+        std::string name = type->GetName();
+        auto it = g_objectTypeComments.find(name);
+        if (it != g_objectTypeComments.end()) return it->second;
+        return "";
+    }
+
+    std::string GetEnumComment(const asITypeInfo* enumType)
+    {
+        if (!enumType) return "";
+        std::string name = enumType->GetName();
+        auto it = g_enumComments.find(name);
+        if (it != g_enumComments.end()) return it->second;
+        return "";
+    }
+
+    std::string GetEnumValueComment(const asITypeInfo* enumType, const std::string& valName)
+    {
+        if (!enumType || valName.empty()) return "";
+        std::string key = std::string(enumType->GetName()) + "::" + valName;
+        auto it = g_enumValueComments.find(key);
+        if (it != g_enumValueComments.end()) return it->second;
+        return "";
+    }
+
+    std::string GetFunctionComment(const asIScriptFunction* func)
+    {
+        if (!func) return "";
+        if (func->GetObjectType() == nullptr)
+        {
+            auto it = g_globalFunctionComments.find(func);
+            if (it != g_globalFunctionComments.end()) return it->second;
+        }
+        return "";
+    }
+
+    std::string GetScopedFunctionComment(const asITypeInfo* type, const asIScriptFunction* func)
+    {
+        if (!type || !func) return "";
+        std::string key = std::string(type->GetName()) + "::" + func->GetDeclaration(false, true, true);
+        auto itKey = g_scopedMethodComments.find(key);
+        if (itKey != g_scopedMethodComments.end()) return itKey->second;
+        return "";
+    }
+
+    std::string GetPropertyComment(const asITypeInfo* type, const std::string& propName)
+    {
+        if (!type) return "";
+        std::string key = std::string(type->GetName()) + "::" + propName;
+        auto it = g_propertyComments.find(key);
+        if (it != g_propertyComments.end()) return it->second;
+        return "";
+    }
+
+    std::string GetGlobalPropertyComment(const std::string& propName)
+    {
+        auto it = g_globalPropertyComments.find(propName);
+        if (it != g_globalPropertyComments.end()) return it->second;
+        return "";
+    }
+}
+
+int RegisterObjectTypeWithComment(asIScriptEngine* engine, const char* obj, int byteSize, asDWORD flags, const char* comment)
+{
+    int r = engine->RegisterObjectType(obj, byteSize, flags);
+    if (r >= 0 && comment && *comment)
+    {
+        ASDoc::RegisterObjectTypeComment(obj, comment);
+    }
+    return r;
+}
+
+int RegisterEnumWithComment(asIScriptEngine* engine, const char* type, const char* comment)
+{
+    int r = engine->RegisterEnum(type);
+    if (r >= 0 && comment && *comment)
+    {
+        ASDoc::RegisterEnumComment(type, comment);
+    }
+    return r;
+}
+
+int RegisterEnumValueWithComment(asIScriptEngine* engine, const char* type, const char* valName, int val, const char* comment)
+{
+    int r = engine->RegisterEnumValue(type, valName, val);
+    if (r >= 0 && comment && *comment)
+    {
+        ASDoc::RegisterEnumValueComment(type, valName, comment);
+    }
+    return r;
+}
+
+int RegisterObjectMethodWithComment(asIScriptEngine* engine, const char* obj, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment)
+{
+    int r = engine->RegisterObjectMethod(obj, declaration, funcPointer, callConv);
+    if (r >= 0 && comment && *comment)
+    {
+        asITypeInfo* type = engine->GetTypeInfoByDecl(obj);
+        asIScriptFunction* func = type ? type->GetMethodByDecl(declaration) : nullptr;
+        if (!func)
+        {
+            func = engine->GetFunctionById(r);
+        }
+        if (func)
+        {
+            ASDoc::RegisterScopedFunctionComment(type, func, comment);
+        }
+    }
+    return r;
+}
+
+int RegisterGlobalFunctionWithComment(asIScriptEngine* engine, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment)
+{
+    int r = engine->RegisterGlobalFunction(declaration, funcPointer, callConv);
+    if (r >= 0 && comment && *comment)
+    {
+        asIScriptFunction* func = engine->GetGlobalFunctionByDecl(declaration);
+        if (func)
+        {
+            ASDoc::RegisterFunctionComment(func, comment);
+        }
+    }
+    return r;
+}
+
+int RegisterObjectBehaviourWithComment(asIScriptEngine* engine, const char* obj, asEBehaviours behaviour, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment)
+{
+    int r = engine->RegisterObjectBehaviour(obj, behaviour, declaration, funcPointer, callConv);
+    if (r >= 0 && comment && *comment)
+    {
+        asITypeInfo* type = engine->GetTypeInfoByDecl(obj);
+        asIScriptFunction* func = engine->GetFunctionById(r);
+        if (func)
+        {
+            ASDoc::RegisterScopedFunctionComment(type, func, comment);
+        }
+    }
+    return r;
+}
+
+int RegisterObjectPropertyWithComment(asIScriptEngine* engine, const char* obj, const char* declaration, int byteOffset, const char* comment)
+{
+    int r = engine->RegisterObjectProperty(obj, declaration, byteOffset);
+    if (r >= 0 && comment && *comment)
+    {
+        asITypeInfo* type = engine->GetTypeInfoByDecl(obj);
+        if (type)
+        {
+            std::string declStr(declaration);
+            size_t spacePos = declStr.rfind(' ');
+            std::string propName = (spacePos != std::string::npos) ? declStr.substr(spacePos + 1) : declStr;
+            ASDoc::RegisterPropertyComment(type, propName, comment);
+        }
+    }
+    return r;
+}
+
+int RegisterGlobalPropertyWithComment(asIScriptEngine* engine, const char* declaration, void* pointer, const char* comment)
+{
+    int r = engine->RegisterGlobalProperty(declaration, pointer);
+    if (r >= 0 && comment && *comment)
+    {
+        std::string declStr(declaration);
+        size_t spacePos = declStr.rfind(' ');
+        std::string propName = (spacePos != std::string::npos) ? declStr.substr(spacePos + 1) : declStr;
+        ASDoc::RegisterGlobalPropertyComment(propName, comment);
+    }
+    return r;
+}
+
+namespace
+{
+    struct GlobalPropInfo
+    {
+        std::string name;
+        std::string typeDecl;
+    };
+
+    struct NamespaceGroup
+    {
+        std::vector<const asITypeInfo*> enums;
+        std::vector<const asITypeInfo*> classes;
+        std::vector<const asIScriptFunction*> functions;
+        std::vector<GlobalPropInfo> properties;
+        std::vector<const asITypeInfo*> typedefs;
+    };
+
+    template <class Stream>
+    void printEnum(const asITypeInfo* e, Stream& stream, const std::string& indent)
+    {
+        std::string comment = ASDoc::GetEnumComment(e);
+        ASDoc::printComment(stream, comment, indent);
+
+        stream << indent << std::format("enum {} {{\n", e->GetName());
+        std::string valIndent = indent + "\t";
+        for (asUINT j = 0; j < e->GetEnumValueCount(); ++j)
+        {
+            const char* valName = e->GetEnumValueByIndex(j, nullptr);
+            if (valName)
+            {
+                ASDoc::printComment(stream, ASDoc::GetEnumValueComment(e, valName), valIndent);
+            }
+            stream << std::format("{}{}", valIndent, valName ? valName : "");
+            if (j < e->GetEnumValueCount() - 1) stream << ",";
+            stream << "\n";
+        }
+        stream << indent << "}\n";
+    }
+
+    template <class Stream>
+    void printClassType(const asITypeInfo* t, Stream& stream, const std::string& indent)
+    {
+        std::string comment = ASDoc::GetObjectTypeComment(t);
+        ASDoc::printComment(stream, comment, indent);
+
+        stream << indent << std::format("class {}", t->GetName());
+        if (t->GetSubTypeCount() > 0)
+        {
+            stream << "<";
+            for (asUINT sub = 0; sub < t->GetSubTypeCount(); ++sub)
+            {
+                if (sub < t->GetSubTypeCount() - 1) stream << ", ";
+                const auto st = t->GetSubType(sub);
+                stream << st->GetName();
+            }
+            stream << ">";
+        }
+
+        stream << "{\n";
+        std::string memberIndent = indent + "\t";
+        for (asUINT j = 0; j < t->GetBehaviourCount(); ++j)
+        {
+            asEBehaviours behaviours;
+            const auto f = t->GetBehaviourByIndex(j, &behaviours);
+            if (behaviours == asBEHAVE_CONSTRUCT || behaviours == asBEHAVE_DESTRUCT)
+            {
+                ASDoc::printComment(stream, ASDoc::GetScopedFunctionComment(t, f), memberIndent);
+                stream << std::format("{}{};\n", memberIndent, f->GetDeclaration(false, true, true));
+            }
+        }
+        for (asUINT j = 0; j < t->GetMethodCount(); ++j)
+        {
+            const auto m = t->GetMethodByIndex(j);
+            ASDoc::printComment(stream, ASDoc::GetScopedFunctionComment(t, m), memberIndent);
+            stream << std::format("{}{};\n", memberIndent, m->GetDeclaration(false, true, true));
+        }
+        for (asUINT j = 0; j < t->GetPropertyCount(); ++j)
+        {
+            const char* propName = nullptr;
+            t->GetProperty(j, &propName);
+            if (propName)
+            {
+                ASDoc::printComment(stream, ASDoc::GetPropertyComment(t, propName), memberIndent);
+            }
+            stream << std::format("{}{};\n", memberIndent, t->GetPropertyDeclaration(j, true));
+        }
+        for (asUINT j = 0; j < t->GetChildFuncdefCount(); ++j)
+        {
+            stream << std::format("{}funcdef {};\n", memberIndent, t->GetChildFuncdef(j)->GetFuncdefSignature()->GetDeclaration(false));
+        }
+        stream << indent << "}\n";
+    }
+}
+
+/// @brief Generate 'as.predefined' file, which contains all defined symbols in C++. It is used by the language server.
+void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& path)
+{
+    assert(path.ends_with("as.predefined"));
+
+    // Collect symbols into namespace groups
+    std::map<std::string, NamespaceGroup> nsGroups;
+
+    // 1. Enums
+    for (asUINT i = 0; i < engine->GetEnumCount(); i++)
+    {
+        const auto e = engine->GetEnumByIndex(i);
+        if (!e) continue;
+        std::string ns = e->GetNamespace();
+        nsGroups[ns].enums.push_back(e);
+    }
+
+    // 2. Object types (classes)
+    for (asUINT i = 0; i < engine->GetObjectTypeCount(); i++)
+    {
+        const auto t = engine->GetObjectTypeByIndex(i);
+        if (!t) continue;
+        std::string ns = t->GetNamespace();
+        nsGroups[ns].classes.push_back(t);
+    }
+
+    // 3. Global functions
+    for (asUINT i = 0; i < engine->GetGlobalFunctionCount(); i++)
+    {
+        const auto f = engine->GetGlobalFunctionByIndex(i);
+        if (!f) continue;
+        std::string ns = f->GetNamespace();
+        nsGroups[ns].functions.push_back(f);
+    }
+
+    // 4. Global properties
+    for (asUINT i = 0; i < engine->GetGlobalPropertyCount(); i++)
+    {
+        const char* name = nullptr;
+        const char* ns0 = nullptr;
+        int type = 0;
+        engine->GetGlobalPropertyByIndex(i, &name, &ns0, &type, nullptr, nullptr, nullptr, nullptr);
+
+        const std::string tStr = engine->GetTypeDeclaration(type, true);
+        if (tStr.empty() || !name) continue;
+
+        std::string ns = ns0 ? ns0 : "";
+        nsGroups[ns].properties.push_back({ name, tStr });
+    }
+
+    // 5. Typedefs
+    for (asUINT i = 0; i < engine->GetTypedefCount(); ++i)
+    {
+        const auto type = engine->GetTypedefByIndex(i);
+        if (!type) continue;
+        std::string ns = type->GetNamespace();
+        nsGroups[ns].typedefs.push_back(type);
+    }
+
+    std::ostringstream stream;
+
+    // Process global scope (empty namespace "") first
+    auto globalIt = nsGroups.find("");
+    if (globalIt != nsGroups.end())
+    {
+        const auto& group = globalIt->second;
+        for (const auto* e : group.enums) printEnum(e, stream, "");
+        for (const auto* t : group.classes) printClassType(t, stream, "");
+        for (const auto* f : group.functions)
+        {
+            ASDoc::printComment(stream, ASDoc::GetFunctionComment(f), "");
+            stream << std::format("{};\n", f->GetDeclaration(false, false, true));
+        }
+        for (const auto& prop : group.properties)
+        {
+            ASDoc::printComment(stream, ASDoc::GetGlobalPropertyComment(prop.name), "");
+            stream << std::format("{} {};\n", prop.typeDecl, prop.name);
+        }
+        for (const auto* type : group.typedefs)
+        {
+            stream << std::format("typedef {} {};\n", engine->GetTypeDeclaration(type->GetTypeId()), type->GetName());
+        }
+    }
+
+    // Process named namespaces grouped together
+    for (const auto& [ns, group] : nsGroups)
+    {
+        if (ns.empty()) continue; // Already processed global scope
+
+        stream << std::format("namespace {} {{\n", ns);
+        std::string indent = "\t";
+
+        for (const auto* e : group.enums) printEnum(e, stream, indent);
+        for (const auto* t : group.classes) printClassType(t, stream, indent);
+        for (const auto* f : group.functions)
+        {
+            ASDoc::printComment(stream, ASDoc::GetFunctionComment(f), indent);
+            stream << std::format("{}{};\n", indent, f->GetDeclaration(false, false, true));
+        }
+        for (const auto& prop : group.properties)
+        {
+            ASDoc::printComment(stream, ASDoc::GetGlobalPropertyComment(prop.name), indent);
+            stream << std::format("{}{} {};\n", indent, prop.typeDecl, prop.name);
+        }
+        for (const auto* type : group.typedefs)
+        {
+            stream << std::format("{}typedef {} {};\n", indent, engine->GetTypeDeclaration(type->GetTypeId()), type->GetName());
+        }
+
+        stream << "}\n";
+    }
+
+    std::string newContent = stream.str();
+
+    // 1:1 buffer comparison to avoid changing timestamps when content hasn't changed
+    if (std::filesystem::exists(path))
+    {
+        std::ifstream inFile(path, std::ios::binary);
+        if (inFile.is_open())
+        {
+            std::string existingContent((std::istreambuf_iterator<char>(inFile)),
+                                         std::istreambuf_iterator<char>());
+            if (existingContent == newContent)
+            {
+                return;
+            }
+        }
+    }
+
+    std::ofstream outFile(path, std::ios::binary);
+    if (outFile.is_open())
+    {
+        outFile << newContent;
+    }
+}

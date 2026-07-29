@@ -31,7 +31,7 @@ class ASOptional
             if( subTypeSize == 0 )
             {
                 asITypeInfo* subType = GetSubTypeInfo();
-                if( subType) subTypeSize = subType->GetSize();
+                if( subType ) subTypeSize = subType->GetSize();
             }
         }
 
@@ -64,28 +64,25 @@ class ASOptional
             if( !hasValue )
                 return;
 
+            asITypeInfo* subType = GetSubTypeInfo();
+
             if( valueBuffer )
             {
-                asITypeInfo* subType = GetSubTypeInfo();
                 if( subTypeId & asTYPEID_OBJHANDLE )
                 {
                     void* obj = *(void**)valueBuffer;
                     if( obj && subType )
-                    {
                         typeInfo->GetEngine()->ReleaseScriptObject(obj, subType);
-                    }
                     operator delete(valueBuffer);
+                }
+                else if( subType && (subType->GetFlags() & asOBJ_REF) )
+                {
+                    typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, subType);
                 }
                 else if( subTypeId & asTYPEID_MASK_OBJECT )
                 {
                     if( subType )
-                    {
                         typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, subType);
-                    }
-                    else
-                    {
-                        operator delete(valueBuffer);
-                    }
                 }
                 else
                 {
@@ -112,22 +109,18 @@ class ASOptional
                 valueBuffer = operator new(sizeof(void*));
                 void* obj = *(void**)ref;
                 *(void**)valueBuffer = obj;
-                if( obj != nullptr && subType )
-                {
+                if( obj && subType )
                     typeInfo->GetEngine()->AddRefScriptObject(obj, subType);
-                }
+            }
+            else if( subType && (subType->GetFlags() & asOBJ_REF) )
+            {
+                valueBuffer = ref;
+                typeInfo->GetEngine()->AddRefScriptObject(valueBuffer, subType);
             }
             else if( subTypeId & asTYPEID_MASK_OBJECT )
             {
                 if( subType )
-                {
                     valueBuffer = typeInfo->GetEngine()->CreateScriptObjectCopy(ref, subType);
-                }
-                else
-                {
-                    valueBuffer = operator new(subTypeSize);
-                    std::memcpy( valueBuffer, ref, subTypeSize );
-                }
             }
             else
             {
@@ -142,10 +135,8 @@ class ASOptional
 
             if( !hasValue )
             {
-                if( ctx != nullptr)
-                {
+                if( ctx )
                     ctx->SetException( "null pointer value in optional!", true );
-                }
                 return;
             }
 
@@ -155,21 +146,18 @@ class ASOptional
             {
                 void* obj = *(void**)valueBuffer;
                 *(void**)outRef = obj;
-                if( obj != nullptr && subType )
-                {
+                if( obj && subType )
                     typeInfo->GetEngine()->AddRefScriptObject(obj, subType);
-                }
+            }
+            else if( subType && (subType->GetFlags() & asOBJ_REF) )
+            {
+                *(void**)outRef = valueBuffer;
+                typeInfo->GetEngine()->AddRefScriptObject(valueBuffer, subType);
             }
             else if( subTypeId & asTYPEID_MASK_OBJECT )
             {
                 if( subType )
-                {
                     typeInfo->GetEngine()->AssignScriptObject(outRef, valueBuffer, subType);
-                }
-                else
-                {
-                    std::memcpy( outRef, valueBuffer, subTypeSize );
-                }
             }
             else
             {
@@ -177,7 +165,7 @@ class ASOptional
             }
         }
 
-        static ASOptional* Factory(asITypeInfo* typeInfo )
+        static ASOptional* Factory( asITypeInfo* typeInfo )
         {
             return new ASOptional( typeInfo );
         }
@@ -186,29 +174,22 @@ class ASOptional
         {
             ASOptional* opt = new ASOptional( typeInfo );
 
-            if( opt != nullptr && valueRef != nullptr )
-            {
+            if( opt && valueRef )
                 opt->Set( valueRef );
-            }
 
             return opt;
         }
 
-
-        static void AssignValueWrapper(ASOptional* opt, void* valueRef )
+        static void AssignValueWrapper( ASOptional* opt, void* valueRef )
         {
-            if( opt != nullptr )
-            {
+            if( opt )
                 opt->Set( valueRef );
-            }
         }
 
-        static void SetValueWrapper(ASOptional* opt, void* valueRef )
+        static void SetValueWrapper( ASOptional* opt, void* valueRef )
         {
-            if( opt != nullptr )
-            {
+            if( opt )
                 opt->Set( valueRef );
-            }
         }
 
         void* GetValuePointer()
@@ -217,10 +198,8 @@ class ASOptional
 
             if( !hasValue )
             {
-                if( ctx != nullptr)
-                {
+                if( ctx )
                     ctx->SetException( "null pointer value in optional!", true );
-                }
                 return nullptr;
             }
 
@@ -233,7 +212,7 @@ class ASOptional
 
             if( subType && (subType->GetFlags() & asOBJ_REF) )
             {
-                return &valueBuffer;
+                return valueBuffer;
             }
 
             return valueBuffer;
@@ -241,29 +220,29 @@ class ASOptional
 
         static void* GetValueWrapper( ASOptional* opt )
         {
-            return opt != nullptr ? opt->GetValuePointer() : nullptr;
+            return opt ? opt->GetValuePointer() : nullptr;
         }
 
         static inline void Register( asIScriptEngine* engine )
         {
-            engine->RegisterObjectType( "optional<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
-            engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(ASOptional, AddRef), asCALL_THISCALL );
-            engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(ASOptional, Release), asCALL_THISCALL );
+            REGISTER_OBJECT_TYPE( engine, "optional<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE, "Generic container that may or may not contain a value of type T." );
+            REGISTER_OBJECT_BEHAVIOUR( engine, "optional<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(ASOptional, AddRef), asCALL_THISCALL, "Increments the reference count of the optional container." );
+            REGISTER_OBJECT_BEHAVIOUR( engine, "optional<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(ASOptional, Release), asCALL_THISCALL, "Decrements the reference count and destroys the optional when 0." );
 
             // Default constructor
-            engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in)", 
-                asFUNCTION((ASOptional*(*)(asITypeInfo*))ASOptional::Factory), asCALL_CDECL );
+            REGISTER_OBJECT_BEHAVIOUR( engine, "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in)",
+                asFUNCTION((ASOptional*(*)(asITypeInfo*))ASOptional::Factory), asCALL_CDECL, "Constructs an empty optional container." );
 
-            engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const T &in value)", 
-                asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryWithValue), asCALL_CDECL );
+            REGISTER_OBJECT_BEHAVIOUR( engine, "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const T &in value)",
+                asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryWithValue), asCALL_CDECL, "Constructs an optional container initialized with a value." );
 
-            engine->RegisterObjectMethod( "optional<T>", "bool has_value() const", asMETHOD(ASOptional, HasValue), asCALL_THISCALL );
-            engine->RegisterObjectMethod( "optional<T>", "void clear()", asMETHOD(ASOptional, Clear), asCALL_THISCALL );
-            engine->RegisterObjectMethod( "optional<T>", "const T& value() const", asFUNCTION(ASOptional::GetValueWrapper), asCALL_CDECL_OBJFIRST );
-            engine->RegisterObjectMethod( "optional<T>", "void set(const T &in value)", asFUNCTION(ASOptional::SetValueWrapper), asCALL_CDECL_OBJFIRST );
+            REGISTER_OBJECT_METHOD( engine, "optional<T>", "bool has_value() const", asMETHOD(ASOptional, HasValue), asCALL_THISCALL, "Returns true if the optional contains a value, false otherwise." );
+            REGISTER_OBJECT_METHOD( engine, "optional<T>", "void clear()", asMETHOD(ASOptional, Clear), asCALL_THISCALL, "Clears the contained value and resets the optional to an empty state." );
+            REGISTER_OBJECT_METHOD( engine, "optional<T>", "const T& value() const", asFUNCTION(ASOptional::GetValueWrapper), asCALL_CDECL_OBJFIRST, "Returns a reference to the contained value. Throws a script exception if empty." );
+            REGISTER_OBJECT_METHOD( engine, "optional<T>", "void set(const T &in value)", asFUNCTION(ASOptional::SetValueWrapper), asCALL_CDECL_OBJFIRST, "Sets the value contained in the optional." );
 
-            engine->RegisterObjectMethod( "optional<T>", "optional<T>& opAssign(const T &in value)", 
-                asFUNCTION(ASOptional::AssignValueWrapper), asCALL_CDECL_OBJFIRST);
+            REGISTER_OBJECT_METHOD( engine, "optional<T>", "optional<T>& opAssign(const T &in value)",
+                asFUNCTION(ASOptional::AssignValueWrapper), asCALL_CDECL_OBJFIRST, "Assigns a new value to the optional container." );
         }
 
 };

@@ -28,6 +28,11 @@ void main()
     optional<string> optString("String");
     Expect("optional.value", true, optString.has_value() && optString.value() == "String" );
 
+    optional<pev> optClass;
+    pev entvar( "SomeDude" );
+    optClass.set(entvar);
+    Expect( "optional with class handles", true, entvar.targetname == optClass.value().targetname );
+
     optional<pev@> optClassHandle;
     pev@ entvarHandle = pev( "SomeDude2" );
     optClassHandle.set(entvarHandle);

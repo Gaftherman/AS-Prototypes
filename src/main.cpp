@@ -11,6 +11,7 @@
 #include <scriptarray/scriptarray.h>
 
 #include "addon_registry.h"
+#include "as_predefined.h"
 
 namespace fs = std::filesystem;
 
@@ -216,6 +217,7 @@ int main(int argc, char **argv) {
                 if (engine) {
                     engine->SetMessageCallback(asFUNCTION(MessageCallback), nullptr, asCALL_CDECL);
                     if (AddonRegistry::RegisterAllAddons(engine)) {
+                        GenerateScriptPredefined(engine, "as.predefined");
                         for (const auto& testFile : testFiles) {
                             std::cout << "\n--> Running: " << testFile.string() << "\n";
                             ExecuteSingleScript(engine, testFile.string(), cleanArgs);
@@ -272,6 +274,8 @@ int main(int argc, char **argv) {
         if (shouldPause) PauseConsole();
         return 1;
     }
+
+    GenerateScriptPredefined(engine, "as.predefined");
 
     int exitCode = ExecuteSingleScript(engine, scriptPath, cleanArgs);
 
