@@ -15,6 +15,7 @@
 #include <datetime/datetime.h>
 
 // Our add-ons prototypes
+#include "addons/ASDispose.hpp"
 #include "addons/ASException.hpp"
 #include "addons/ASOptional.hpp"
 
@@ -77,6 +78,7 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
 
     ASException::Register( engine );
     ASOptional::Register( engine );
+    ASDispose::Register( engine );
 
     return true;
 }

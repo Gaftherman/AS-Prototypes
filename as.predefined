@@ -28,6 +28,8 @@ class optional<T>
     optional<T>& opAssign(const T &in value);
 }
 
+bool Dispose( ?&in obj );
+
 // Namespace containing API specifically for this project's Tests
 namespace Tests
 {
