@@ -186,6 +186,7 @@ class ref{
 	bool opEquals(const ref&in) const;
 	bool opEquals(const ?&in) const;
 }
+/// Addon: ASException
 /// Exception object storing callstack, line number, message, and metadata.
 class Exception{
 	/// Exception error message string.
@@ -213,6 +214,7 @@ class optional<T>{
 	/// Assigns a new value to the optional container.
 	optional<T>& opAssign(const T&in value);
 }
+/// Addon: ASJSON
 /// JSON value container supporting null, boolean, number, string, array, and object types.
 class JSON{
 	/// Returns a string representation of the JSON object.
@@ -251,6 +253,7 @@ int64 parseInt(const string&in, uint base = 10, uint&out byteCount = 0);
 uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
 double parseFloat(const string&in, uint&out byteCount = 0);
 string join(const string[]&in, const string&in);
+/// Addon: ASDispose
 /// Prints a string to the console output.
 void print(const string&in);
 /// Prints a string to the console output followed by a newline.
@@ -260,17 +263,13 @@ uint fpToIEEE(float);
 double fpFromIEEE(uint64);
 uint64 fpToIEEE(double);
 bool closeTo(float, float, float = 0.00001f);
-/// Prints a string to the console output followed by a newline.
 bool closeTo(double, double, double = 0.0000000001);
 float cos(float);
-/// Disposes of the given script object handle.
 float sin(float);
-/// Raises a script exception with an optional metadata dictionary.
 float tan(float);
 float acos(float);
 float asin(float);
 float atan(float);
-/// Returns the current active exception object.
 float atan2(float, float);
 float cosh(float);
 float sinh(float);
@@ -283,10 +282,13 @@ float ceil(float);
 float abs(float);
 float floor(float);
 float fraction(float);
+/// Addon: ASException
 /// Raises a script exception with an optional metadata dictionary.
 void SetException(const string&in exception, dictionary@ data = null);
+/// Addon: ASException
 /// Returns the current active exception object.
 Exception@ GetException();
+/// Addon: ASDispose
 /// Disposes of the given script object handle.
 bool Dispose(?&out);
 namespace Tests {
@@ -297,6 +299,7 @@ namespace Tests {
 	/// Number of failed test assertions.
 	int Fails;
 }
+/// Addon: ASJSON
 namespace json {
 	/// Specifies error handling strategy during JSON serialization and deserialization.
 	enum error_handler {

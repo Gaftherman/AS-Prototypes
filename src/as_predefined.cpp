@@ -15,7 +15,6 @@
 
 namespace ASDoc
 {
-    // Storage maps for doc comments inside ASDoc namespace
     static std::unordered_map<std::string, std::string> g_objectTypeComments; // Key: obj name
     static std::unordered_map<std::string, std::string> g_enumComments; // Key: enum name
     static std::unordered_map<std::string, std::string> g_enumValueComments; // Key: "EnumName::ValName"
@@ -23,6 +22,26 @@ namespace ASDoc
     static std::unordered_map<std::string, std::string> g_scopedMethodComments; // Key: "TypeName::Decl"
     static std::unordered_map<std::string, std::string> g_propertyComments; // Key: "TypeName::PropName"
     static std::unordered_map<std::string, std::string> g_globalPropertyComments; // Key: "PropName"
+
+    static std::unordered_map<std::string, std::string> g_typeAddons;
+    static std::unordered_map<const asIScriptFunction*, std::string> g_functionAddons;
+    static std::unordered_map<std::string, std::string> g_namespaceAddons;
+
+    std::string ExtractAddonName(const char* functionSig)
+    {
+        if (!functionSig) return "";
+        std::string sig(functionSig);
+        size_t pos = sig.rfind("::");
+        if (pos != std::string::npos)
+        {
+            size_t start = sig.rfind(' ', pos);
+            if (start == std::string::npos) start = 0;
+            else start++;
+            std::string addon = sig.substr(start, pos - start);
+            if (addon != "AddonRegistry") return addon;
+        }
+        return "";
+    }
 
     template <class Stream>
     void printComment(Stream& stream, const std::string& comment, const std::string& indent = "")
@@ -36,15 +55,17 @@ namespace ASDoc
         }
     }
 
-    void RegisterObjectTypeComment(const std::string& obj, const std::string& comment)
+    void RegisterObjectTypeComment(const std::string& obj, const std::string& comment, const char* funcSig)
     {
-        if (!obj.empty() && !comment.empty())
+        if (!obj.empty())
         {
-            g_objectTypeComments[obj] = comment;
+            if (!comment.empty()) g_objectTypeComments[obj] = comment;
+            std::string addon = ExtractAddonName(funcSig);
+            if (!addon.empty()) g_typeAddons[obj] = addon;
         }
     }
 
-    void RegisterEnumComment(const std::string& enumName, const std::string& comment)
+    void RegisterEnumComment(const std::string& enumName, const std::string& comment, const char* /*funcSig*/)
     {
         if (!enumName.empty() && !comment.empty())
         {
@@ -52,7 +73,7 @@ namespace ASDoc
         }
     }
 
-    void RegisterEnumValueComment(const std::string& enumName, const std::string& valName, const std::string& comment)
+    void RegisterEnumValueComment(const std::string& enumName, const std::string& valName, const std::string& comment, const char* /*funcSig*/)
     {
         if (!enumName.empty() && !valName.empty() && !comment.empty())
         {
@@ -61,39 +82,42 @@ namespace ASDoc
         }
     }
 
-    void RegisterFunctionComment(asIScriptFunction* func, const std::string& comment)
+    void RegisterFunctionComment(asIScriptFunction* func, const std::string& comment, const char* funcSig)
     {
-        if (func && !comment.empty())
+        if (func)
         {
-            if (func->GetObjectType() != nullptr)
+            std::string addon = ExtractAddonName(funcSig);
+            if (!addon.empty())
             {
-                std::string key = std::string(func->GetObjectType()->GetName()) + "::" + func->GetDeclaration(false, true, true);
-                g_scopedMethodComments[key] = comment;
+                g_functionAddons[func] = addon;
+                const char* ns = func->GetNamespace();
+                if (ns && *ns) g_namespaceAddons[ns] = addon;
             }
-            else
+            if (!comment.empty())
             {
-                g_globalFunctionComments[func] = comment;
+                if (func->GetObjectType() != nullptr)
+                {
+                    std::string key = std::string(func->GetObjectType()->GetName()) + "::" + func->GetDeclaration(false, true, true);
+                    g_scopedMethodComments[key] = comment;
+                }
+                else
+                {
+                    g_globalFunctionComments[func] = comment;
+                }
             }
         }
     }
 
-    void RegisterScopedFunctionComment(const asITypeInfo* type, asIScriptFunction* func, const std::string& comment)
+    void RegisterScopedFunctionComment(const asITypeInfo* type, asIScriptFunction* func, const std::string& comment, const char* /*funcSig*/)
     {
-        if (!comment.empty())
+        if (type && !comment.empty())
         {
-            if (type && func)
-            {
-                std::string key = std::string(type->GetName()) + "::" + func->GetDeclaration(false, true, true);
-                g_scopedMethodComments[key] = comment;
-            }
-            else if (func)
-            {
-                g_globalFunctionComments[func] = comment;
-            }
+            std::string key = std::string(type->GetName()) + "::" + (func ? func->GetDeclaration(false, true, true) : "");
+            g_scopedMethodComments[key] = comment;
         }
     }
 
-    void RegisterPropertyComment(const asITypeInfo* type, const std::string& propName, const std::string& comment)
+    void RegisterPropertyComment(const asITypeInfo* type, const std::string& propName, const std::string& comment, const char* /*funcSig*/)
     {
         if (type && !propName.empty() && !comment.empty())
         {
@@ -102,7 +126,7 @@ namespace ASDoc
         }
     }
 
-    void RegisterGlobalPropertyComment(const std::string& propName, const std::string& comment)
+    void RegisterGlobalPropertyComment(const std::string& propName, const std::string& comment, const char* /*funcSig*/)
     {
         if (!propName.empty() && !comment.empty())
         {
@@ -172,87 +196,99 @@ namespace ASDoc
         if (it != g_globalPropertyComments.end()) return it->second;
         return "";
     }
+
+    std::string GetTypeAddon(const asITypeInfo* type)
+    {
+        if (!type) return "";
+        auto it = g_typeAddons.find(type->GetName());
+        if (it != g_typeAddons.end()) return it->second;
+        return "";
+    }
+
+    std::string GetFunctionAddon(const asIScriptFunction* func)
+    {
+        if (!func) return "";
+        auto it = g_functionAddons.find(func);
+        if (it != g_functionAddons.end()) return it->second;
+        return "";
+    }
+
+    std::string GetNamespaceAddon(const std::string& ns)
+    {
+        if (ns.empty()) return "";
+        auto it = g_namespaceAddons.find(ns);
+        if (it != g_namespaceAddons.end()) return it->second;
+        return "";
+    }
 }
 
-int RegisterObjectTypeWithComment(asIScriptEngine* engine, const char* obj, int byteSize, asDWORD flags, const char* comment)
+int RegisterObjectTypeWithComment(asIScriptEngine* engine, const char* obj, int byteSize, asDWORD flags, const char* comment, const char* funcSig)
 {
     int r = engine->RegisterObjectType(obj, byteSize, flags);
-    if (r >= 0 && comment && *comment)
+    if (r >= 0)
     {
-        ASDoc::RegisterObjectTypeComment(obj, comment);
+        ASDoc::RegisterObjectTypeComment(obj, comment ? comment : "", funcSig);
     }
     return r;
 }
 
-int RegisterEnumWithComment(asIScriptEngine* engine, const char* type, const char* comment)
+int RegisterEnumWithComment(asIScriptEngine* engine, const char* type, const char* comment, const char* funcSig)
 {
     int r = engine->RegisterEnum(type);
-    if (r >= 0 && comment && *comment)
+    if (r >= 0)
     {
-        ASDoc::RegisterEnumComment(type, comment);
+        ASDoc::RegisterEnumComment(type, comment ? comment : "", funcSig);
     }
     return r;
 }
 
-int RegisterEnumValueWithComment(asIScriptEngine* engine, const char* type, const char* valName, int val, const char* comment)
+int RegisterEnumValueWithComment(asIScriptEngine* engine, const char* type, const char* valName, int val, const char* comment, const char* funcSig)
 {
     int r = engine->RegisterEnumValue(type, valName, val);
-    if (r >= 0 && comment && *comment)
+    if (r >= 0)
     {
-        ASDoc::RegisterEnumValueComment(type, valName, comment);
+        ASDoc::RegisterEnumValueComment(type, valName, comment ? comment : "", funcSig);
     }
     return r;
 }
 
-int RegisterObjectMethodWithComment(asIScriptEngine* engine, const char* obj, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment)
+int RegisterObjectMethodWithComment(asIScriptEngine* engine, const char* obj, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment, const char* funcSig)
 {
     int r = engine->RegisterObjectMethod(obj, declaration, funcPointer, callConv);
-    if (r >= 0 && comment && *comment)
+    if (r >= 0)
     {
         asITypeInfo* type = engine->GetTypeInfoByDecl(obj);
         asIScriptFunction* func = type ? type->GetMethodByDecl(declaration) : nullptr;
-        if (!func)
-        {
-            func = engine->GetFunctionById(r);
-        }
-        if (func)
-        {
-            ASDoc::RegisterScopedFunctionComment(type, func, comment);
-        }
+        if (!func) func = engine->GetFunctionById(r);
+        if (func) ASDoc::RegisterScopedFunctionComment(type, func, comment ? comment : "", funcSig);
     }
     return r;
 }
 
-int RegisterGlobalFunctionWithComment(asIScriptEngine* engine, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment)
+int RegisterGlobalFunctionWithComment(asIScriptEngine* engine, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment, const char* funcSig)
 {
     int r = engine->RegisterGlobalFunction(declaration, funcPointer, callConv);
-    if (r >= 0 && comment && *comment)
+    if (r >= 0)
     {
         asIScriptFunction* func = engine->GetGlobalFunctionByDecl(declaration);
-        if (func)
-        {
-            ASDoc::RegisterFunctionComment(func, comment);
-        }
+        if (func) ASDoc::RegisterFunctionComment(func, comment ? comment : "", funcSig);
     }
     return r;
 }
 
-int RegisterObjectBehaviourWithComment(asIScriptEngine* engine, const char* obj, asEBehaviours behaviour, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment)
+int RegisterObjectBehaviourWithComment(asIScriptEngine* engine, const char* obj, asEBehaviours behaviour, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv, const char* comment, const char* funcSig)
 {
     int r = engine->RegisterObjectBehaviour(obj, behaviour, declaration, funcPointer, callConv);
-    if (r >= 0 && comment && *comment)
+    if (r >= 0)
     {
         asITypeInfo* type = engine->GetTypeInfoByDecl(obj);
         asIScriptFunction* func = engine->GetFunctionById(r);
-        if (func)
-        {
-            ASDoc::RegisterScopedFunctionComment(type, func, comment);
-        }
+        if (func) ASDoc::RegisterScopedFunctionComment(type, func, comment ? comment : "", funcSig);
     }
     return r;
 }
 
-int RegisterObjectPropertyWithComment(asIScriptEngine* engine, const char* obj, const char* declaration, int byteOffset, const char* comment)
+int RegisterObjectPropertyWithComment(asIScriptEngine* engine, const char* obj, const char* declaration, int byteOffset, const char* comment, const char* funcSig)
 {
     int r = engine->RegisterObjectProperty(obj, declaration, byteOffset);
     if (r >= 0 && comment && *comment)
@@ -263,13 +299,13 @@ int RegisterObjectPropertyWithComment(asIScriptEngine* engine, const char* obj, 
             std::string declStr(declaration);
             size_t spacePos = declStr.rfind(' ');
             std::string propName = (spacePos != std::string::npos) ? declStr.substr(spacePos + 1) : declStr;
-            ASDoc::RegisterPropertyComment(type, propName, comment);
+            ASDoc::RegisterPropertyComment(type, propName, comment, funcSig);
         }
     }
     return r;
 }
 
-int RegisterGlobalPropertyWithComment(asIScriptEngine* engine, const char* declaration, void* pointer, const char* comment)
+int RegisterGlobalPropertyWithComment(asIScriptEngine* engine, const char* declaration, void* pointer, const char* comment, const char* funcSig)
 {
     int r = engine->RegisterGlobalProperty(declaration, pointer);
     if (r >= 0 && comment && *comment)
@@ -277,7 +313,7 @@ int RegisterGlobalPropertyWithComment(asIScriptEngine* engine, const char* decla
         std::string declStr(declaration);
         size_t spacePos = declStr.rfind(' ');
         std::string propName = (spacePos != std::string::npos) ? declStr.substr(spacePos + 1) : declStr;
-        ASDoc::RegisterGlobalPropertyComment(propName, comment);
+        ASDoc::RegisterGlobalPropertyComment(propName, comment, funcSig);
     }
     return r;
 }
@@ -324,6 +360,11 @@ namespace
     template <class Stream>
     void printClassType(const asITypeInfo* t, Stream& stream, const std::string& indent)
     {
+        std::string addon = ASDoc::GetTypeAddon(t);
+        if (!addon.empty())
+        {
+            stream << indent << "/// Addon: " << addon << "\n";
+        }
         std::string comment = ASDoc::GetObjectTypeComment(t);
         ASDoc::printComment(stream, comment, indent);
 
@@ -446,6 +487,11 @@ void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& 
         for (const auto* t : group.classes) printClassType(t, stream, "");
         for (const auto* f : group.functions)
         {
+            std::string addon = ASDoc::GetFunctionAddon(f);
+            if (!addon.empty())
+            {
+                stream << "/// Addon: " << addon << "\n";
+            }
             ASDoc::printComment(stream, ASDoc::GetFunctionComment(f), "");
             stream << std::format("{};\n", f->GetDeclaration(false, false, true));
         }
@@ -465,6 +511,11 @@ void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& 
     {
         if (ns.empty()) continue; // Already processed global scope
 
+        std::string addon = ASDoc::GetNamespaceAddon(ns);
+        if (!addon.empty())
+        {
+            stream << "/// Addon: " << addon << "\n";
+        }
         stream << std::format("namespace {} {{\n", ns);
         std::string indent = "\t";
 
