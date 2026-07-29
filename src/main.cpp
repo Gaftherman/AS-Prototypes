@@ -59,6 +59,18 @@ std::vector<fs::path> FindTestScriptFiles() {
             if (!paths.empty()) break;
         }
     }
+
+    // Sort files by modification date: oldest first, newest LAST
+    std::sort(paths.begin(), paths.end(), [](const fs::path& a, const fs::path& b) {
+        std::error_code ec1, ec2;
+        auto timeA = fs::last_write_time(a, ec1);
+        auto timeB = fs::last_write_time(b, ec2);
+        if (!ec1 && !ec2) {
+            return timeA < timeB;
+        }
+        return a.string() < b.string();
+    });
+
     return paths;
 }
 
