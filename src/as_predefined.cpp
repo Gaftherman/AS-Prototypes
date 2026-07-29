@@ -3,7 +3,6 @@
 #include "as_predefined.h"
 
 #include <cassert>
-#include <format>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -341,7 +340,7 @@ namespace
         std::string comment = ASDoc::GetEnumComment(e);
         ASDoc::printComment(stream, comment, indent);
 
-        stream << indent << std::format("enum {} {{\n", e->GetName());
+        stream << indent << "enum " << e->GetName() << " {\n";
         std::string valIndent = indent + "\t";
         for (asUINT j = 0; j < e->GetEnumValueCount(); ++j)
         {
@@ -350,7 +349,7 @@ namespace
             {
                 ASDoc::printComment(stream, ASDoc::GetEnumValueComment(e, valName), valIndent);
             }
-            stream << std::format("{}{}", valIndent, valName ? valName : "");
+            stream << valIndent << (valName ? valName : "");
             if (j < e->GetEnumValueCount() - 1) stream << ",";
             stream << "\n";
         }
@@ -368,7 +367,7 @@ namespace
         std::string comment = ASDoc::GetObjectTypeComment(t);
         ASDoc::printComment(stream, comment, indent);
 
-        stream << indent << std::format("class {}", t->GetName());
+        stream << indent << "class " << t->GetName();
         if (t->GetSubTypeCount() > 0)
         {
             stream << "<";
@@ -390,14 +389,14 @@ namespace
             if (behaviours == asBEHAVE_CONSTRUCT || behaviours == asBEHAVE_DESTRUCT)
             {
                 ASDoc::printComment(stream, ASDoc::GetScopedFunctionComment(t, f), memberIndent);
-                stream << std::format("{}{};\n", memberIndent, f->GetDeclaration(false, true, true));
+                stream << memberIndent << f->GetDeclaration(false, true, true) << ";\n";
             }
         }
         for (asUINT j = 0; j < t->GetMethodCount(); ++j)
         {
             const auto m = t->GetMethodByIndex(j);
             ASDoc::printComment(stream, ASDoc::GetScopedFunctionComment(t, m), memberIndent);
-            stream << std::format("{}{};\n", memberIndent, m->GetDeclaration(false, true, true));
+            stream << memberIndent << m->GetDeclaration(false, true, true) << ";\n";
         }
         for (asUINT j = 0; j < t->GetPropertyCount(); ++j)
         {
@@ -407,11 +406,11 @@ namespace
             {
                 ASDoc::printComment(stream, ASDoc::GetPropertyComment(t, propName), memberIndent);
             }
-            stream << std::format("{}{};\n", memberIndent, t->GetPropertyDeclaration(j, true));
+            stream << memberIndent << t->GetPropertyDeclaration(j, true) << ";\n";
         }
         for (asUINT j = 0; j < t->GetChildFuncdefCount(); ++j)
         {
-            stream << std::format("{}funcdef {};\n", memberIndent, t->GetChildFuncdef(j)->GetFuncdefSignature()->GetDeclaration(false));
+            stream << memberIndent << "funcdef " << t->GetChildFuncdef(j)->GetFuncdefSignature()->GetDeclaration(false) << ";\n";
         }
         stream << indent << "}\n";
     }
@@ -420,7 +419,8 @@ namespace
 /// @brief Generate 'as.predefined' file, which contains all defined symbols in C++. It is used by the language server.
 void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& path)
 {
-    assert(path.ends_with("as.predefined"));
+    const std::string suffix = "as.predefined";
+    assert(path.size() >= suffix.size() && path.compare(path.size() - suffix.size(), suffix.size(), suffix) == 0);
 
     // Collect symbols into namespace groups
     std::map<std::string, NamespaceGroup> nsGroups;
@@ -493,16 +493,16 @@ void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& 
                 stream << "/// Addon: " << addon << "\n";
             }
             ASDoc::printComment(stream, ASDoc::GetFunctionComment(f), "");
-            stream << std::format("{};\n", f->GetDeclaration(false, false, true));
+            stream << f->GetDeclaration(false, false, true) << ";\n";
         }
         for (const auto& prop : group.properties)
         {
             ASDoc::printComment(stream, ASDoc::GetGlobalPropertyComment(prop.name), "");
-            stream << std::format("{} {};\n", prop.typeDecl, prop.name);
+            stream << prop.typeDecl << " " << prop.name << ";\n";
         }
         for (const auto* type : group.typedefs)
         {
-            stream << std::format("typedef {} {};\n", engine->GetTypeDeclaration(type->GetTypeId()), type->GetName());
+            stream << "typedef " << engine->GetTypeDeclaration(type->GetTypeId()) << " " << type->GetName() << ";\n";
         }
     }
 
@@ -516,7 +516,7 @@ void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& 
         {
             stream << "/// Addon: " << addon << "\n";
         }
-        stream << std::format("namespace {} {{\n", ns);
+        stream << "namespace " << ns << " {\n";
         std::string indent = "\t";
 
         for (const auto* e : group.enums) printEnum(e, stream, indent);
@@ -524,16 +524,16 @@ void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& 
         for (const auto* f : group.functions)
         {
             ASDoc::printComment(stream, ASDoc::GetFunctionComment(f), indent);
-            stream << std::format("{}{};\n", indent, f->GetDeclaration(false, false, true));
+            stream << indent << f->GetDeclaration(false, false, true) << ";\n";
         }
         for (const auto& prop : group.properties)
         {
             ASDoc::printComment(stream, ASDoc::GetGlobalPropertyComment(prop.name), indent);
-            stream << std::format("{}{} {};\n", indent, prop.typeDecl, prop.name);
+            stream << indent << prop.typeDecl << " " << prop.name << ";\n";
         }
         for (const auto* type : group.typedefs)
         {
-            stream << std::format("{}typedef {} {};\n", indent, engine->GetTypeDeclaration(type->GetTypeId()), type->GetName());
+            stream << indent << "typedef " << engine->GetTypeDeclaration(type->GetTypeId()) << " " << type->GetName() << ";\n";
         }
 
         stream << "}\n";

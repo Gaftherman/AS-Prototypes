@@ -263,18 +263,18 @@ double fpFromIEEE(uint64);
 uint64 fpToIEEE(double);
 bool closeTo(float, float, float = 0.00001f);
 bool closeTo(double, double, double = 0.0000000001);
+/// Prints a string to the console output.
 float cos(float);
 float sin(float);
 float tan(float);
-/// Tests an assertion condition and increments pass/fail counters.
 float acos(float);
-/// Prints a string to the console output followed by a newline.
 float asin(float);
+/// Tests an assertion condition and increments pass/fail counters.
 float atan(float);
 float atan2(float, float);
+/// Addon: ASDispose
+/// Disposes of the given script object handle.
 float cosh(float);
-/// Addon: ASException
-/// Returns the current active exception object.
 float sinh(float);
 float tanh(float);
 float log(float);
@@ -284,8 +284,6 @@ float sqrt(float);
 float ceil(float);
 float abs(float);
 float floor(float);
-/// Addon: ASException
-/// Raises a script exception with an optional metadata dictionary.
 float fraction(float);
 /// Addon: ASException
 /// Raises a script exception with an optional metadata dictionary.
