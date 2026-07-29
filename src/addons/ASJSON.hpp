@@ -16,6 +16,7 @@ class ASJSON
 
     public:
         nlohmann::json m_json;
+        bool strict = true;
 
         ASJSON() : refCount(1) { }
 
@@ -199,6 +200,9 @@ class ASJSON
 
                 // Alias to json::dumps using indents -1 and error_handler_t::ignore. this is exception-safe to print or debug in AS
                 engine->RegisterObjectMethod( "JSON", "string ToString() const", asMETHOD(ASJSON, ToString), asCALL_THISCALL );
+
+                // when false; JSON will silent fail. when true; JSON will raise exceptions.
+                engine->RegisterObjectProperty( "JSON", "bool strict", asOFFSET(ASJSON, strict) );
             }
             engine->SetDefaultNamespace( "" );
         }

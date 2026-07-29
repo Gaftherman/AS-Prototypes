@@ -9,7 +9,7 @@ void main()
 
     string deserialized = json::dumps( validObject );
     Expect( "json::dumps valid", true, deserialized != "" );
-    println( "Serialized: " + deserialized );
+//    println( "Serialized: " + deserialized );
 
     bool result = true;
 
@@ -49,10 +49,11 @@ void main()
     Expect( "json::dumps with ignore mode", true, json::dumps( objInvalidCharacter, json::error_handler::ignore ) != "" );
 #endif
 
-    JSON@ objConst = JSON();
-    Expect( "JSON::ToString() const", true, objConst.ToString() == "null" );
+    JSON@ obj = JSON();
+    Expect( "JSON::ToString() const", true, obj.ToString() == "null" );
     Expect( "JSON::ToString() (null internal json)", true, JSON().ToString() == "null" );
-    @objConst = json::loads( "[1]" );
-    Expect( "JSON::ToString() valid", true, objConst.ToString() == "[1]" );
+    @obj = json::loads( "[1]" );
+    Expect( "JSON::ToString() valid", true, obj.ToString() == "[1]" );
 
+    Expect( "JSON::strict default true", true, obj.strict );
 }
