@@ -159,7 +159,7 @@ class ASJSON
         }
 #endif
 
-        CString ToString()
+        CString to_string()
         {
             return ASJSON::dumps(this, -1, static_cast<int>(nlohmann::json::error_handler_t::replace) );
         }
@@ -199,10 +199,11 @@ class ASJSON
 #endif
 
                 // Alias to json::dumps using indents -1 and error_handler_t::ignore. this is exception-safe to print or debug in AS
-                engine->RegisterObjectMethod( "JSON", "string ToString() const", asMETHOD(ASJSON, ToString), asCALL_THISCALL );
+                engine->RegisterObjectMethod( "JSON", "string to_string() const", asMETHOD(ASJSON, to_string), asCALL_THISCALL );
 
                 // when false; JSON will silent fail. when true; JSON will raise exceptions.
                 engine->RegisterObjectProperty( "JSON", "bool strict", asOFFSET(ASJSON, strict) );
+
             }
             engine->SetDefaultNamespace( "" );
         }

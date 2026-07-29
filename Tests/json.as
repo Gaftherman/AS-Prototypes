@@ -50,10 +50,10 @@ void main()
 #endif
 
     JSON@ obj = JSON();
-    Expect( "JSON::ToString() const", true, obj.ToString() == "null" );
-    Expect( "JSON::ToString() (null internal json)", true, JSON().ToString() == "null" );
+    Expect( "JSON::to_string() const", true, obj.to_string() == "null" );
+    Expect( "JSON::to_string() (null internal json)", true, JSON().to_string() == "null" );
     @obj = json::loads( "[1]" );
-    Expect( "JSON::ToString() valid", true, obj.ToString() == "[1]" );
+    Expect( "JSON::to_string() valid", true, obj.to_string() == "[1]" );
 
     Expect( "JSON::strict default true", true, obj.strict );
 }

@@ -36,7 +36,7 @@ class JSON
     bool strict;
 
     // Alias to json::dumps using indents -1 and error_handler_t::ignore. this is exception-safe to print or debug in AS
-    string ToString() const;
+    string to_string() const;
 }
 
 namespace json
