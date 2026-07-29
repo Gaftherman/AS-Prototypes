@@ -54,17 +54,27 @@ class ASOptional
             if( !hasValue )
                 return;
 
-            if( valueBuffer && ( subTypeId & asTYPEID_MASK_OBJECT ) )
+            if( valueBuffer )
             {
-                asIScriptObject* obj = *(asIScriptObject**)valueBuffer;
-
-                if( obj )
+                if( subTypeId & asTYPEID_OBJHANDLE )
                 {
-                    obj->Release();
+                    void* obj = *(void**)valueBuffer;
+                    if( obj )
+                    {
+                        typeInfo->GetEngine()->ReleaseScriptObject(obj, typeInfo->GetSubType());
+                    }
+                    operator delete(valueBuffer);
+                }
+                else if( subTypeId & asTYPEID_MASK_OBJECT )
+                {
+                    typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, typeInfo->GetSubType());
+                }
+                else
+                {
+                    operator delete(valueBuffer);
                 }
             }
 
-            operator delete(valueBuffer);
             valueBuffer = nullptr;
             hasValue = false;
         }
@@ -76,22 +86,25 @@ class ASOptional
             if( !ref )
                 return;
 
-            valueBuffer = operator new(subTypeSize);
             hasValue = true;
 
-            if( subTypeId & asTYPEID_MASK_OBJECT )
+            if( subTypeId & asTYPEID_OBJHANDLE )
             {
-                asIScriptObject* obj = *(asIScriptObject**)ref;
-
-                *(asIScriptObject**)valueBuffer = obj;
-
+                valueBuffer = operator new(sizeof(void*));
+                void* obj = *(void**)ref;
+                *(void**)valueBuffer = obj;
                 if( obj != nullptr )
                 {
-                    obj->AddRef();
+                    typeInfo->GetEngine()->AddRefScriptObject(obj, typeInfo->GetSubType());
                 }
+            }
+            else if( subTypeId & asTYPEID_MASK_OBJECT )
+            {
+                valueBuffer = typeInfo->GetEngine()->CreateScriptObjectCopy(ref, typeInfo->GetSubType());
             }
             else
             {
+                valueBuffer = operator new(subTypeSize);
                 std::memcpy( valueBuffer, ref, subTypeSize );
             }
         }
@@ -109,16 +122,18 @@ class ASOptional
                 return;
             }
 
-            if( subTypeId & asTYPEID_MASK_OBJECT )
+            if( subTypeId & asTYPEID_OBJHANDLE )
             {
-                asIScriptObject* obj = *(asIScriptObject**)valueBuffer;
-
-                *(asIScriptObject**)outRef = obj;
-
+                void* obj = *(void**)valueBuffer;
+                *(void**)outRef = obj;
                 if( obj != nullptr )
                 {
-                    obj->AddRef();
+                    typeInfo->GetEngine()->AddRefScriptObject(obj, typeInfo->GetSubType());
                 }
+            }
+            else if( subTypeId & asTYPEID_MASK_OBJECT )
+            {
+                typeInfo->GetEngine()->AssignScriptObject(outRef, valueBuffer, typeInfo->GetSubType());
             }
             else
             {
@@ -173,14 +188,12 @@ class ASOptional
                 return nullptr;
             }
 
-            // If it's a handle (T@), AngelScript expects a pointer to the handle
-            if( subTypeId & asTYPEID_MASK_OBJECT )
+            if( subTypeId & asTYPEID_OBJHANDLE )
             {
-                return valueBuffer; // Returns void** (which matches T@&)
+                return valueBuffer;
             }
 
-            // Primitives (int, float, etc.) return the direct data address
-            return valueBuffer; // Returns void* (which matches T&)
+            return valueBuffer;
         }
 
         static void* GetValueWrapper( ASOptional* opt )
@@ -198,9 +211,8 @@ class ASOptional
             engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in)", 
                 asFUNCTION((ASOptional*(*)(asITypeInfo*))ASOptional::Factory), asCALL_CDECL );
 
-            // -TODO This crash. not sure how to allow constructors like optional<string> optStr( "something" )
-            // engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const T &in value)", 
-            //    asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryWithValue), asCALL_CDECL );
+            engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const T &in value)", 
+                asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryWithValue), asCALL_CDECL );
 
             engine->RegisterObjectMethod( "optional<T>", "bool has_value() const", asMETHOD(ASOptional, HasValue), asCALL_THISCALL );
             engine->RegisterObjectMethod( "optional<T>", "void clear()", asMETHOD(ASOptional, Clear), asCALL_THISCALL );

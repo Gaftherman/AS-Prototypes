@@ -25,7 +25,7 @@ void main()
     optId.clear();
     Expect("optional.clear", false, optId.has_value() );
 
-#if FALSE
+#if TRUE
     optional<string> optString("String");
     Expect("optional.value", true, optString.has_value() && optString.value() == "String" );
 
