@@ -53,6 +53,7 @@ set(APP_SOURCES
     src/main.cpp
     src/addon_registry.cpp
     src/as_predefined.cpp
+    src/utility/CString.cpp
 )
 
 add_executable(asrun
@@ -64,6 +65,7 @@ target_include_directories(asrun PRIVATE
     ${ANGELSCRIPT_INCLUDE_DIR}
     ${ANGELSCRIPT_ADDON_DIR}
     src
+    src/utility
     ${doctest_SOURCE_DIR}
 )
 
