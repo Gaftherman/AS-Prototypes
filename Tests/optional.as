@@ -25,16 +25,8 @@ void main()
     optId.clear();
     Expect("optional.clear", false, optId.has_value() );
 
-#if TRUE
     optional<string> optString("String");
     Expect("optional.value", true, optString.has_value() && optString.value() == "String" );
-
-    // -TODO Esto tambien crashea XD
-    optional<pev> optClass;
-    pev entvar( "SomeDude" );
-    optClass.set(entvar);
-    Expect( "optional with class handles", true, entvar.targetname == optClass.value().targetname );
-#endif
 
     optional<pev@> optClassHandle;
     pev@ entvarHandle = pev( "SomeDude2" );

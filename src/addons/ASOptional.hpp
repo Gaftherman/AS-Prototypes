@@ -11,6 +11,16 @@ class ASOptional
         void* valueBuffer;
         int refCount;
 
+        asITypeInfo* GetSubTypeInfo() const
+        {
+            asITypeInfo* subType = typeInfo->GetSubType();
+            if( !subType )
+            {
+                subType = typeInfo->GetEngine()->GetTypeInfoById(subTypeId);
+            }
+            return subType;
+        }
+
     public:
         ASOptional( asITypeInfo* tinfo ) : typeInfo(tinfo), valueBuffer(nullptr), refCount(1)
         {
@@ -20,7 +30,7 @@ class ASOptional
             
             if( subTypeSize == 0 )
             {
-                asITypeInfo* subType = typeInfo->GetSubType();
+                asITypeInfo* subType = GetSubTypeInfo();
                 if( subType) subTypeSize = subType->GetSize();
             }
         }
@@ -56,18 +66,26 @@ class ASOptional
 
             if( valueBuffer )
             {
+                asITypeInfo* subType = GetSubTypeInfo();
                 if( subTypeId & asTYPEID_OBJHANDLE )
                 {
                     void* obj = *(void**)valueBuffer;
-                    if( obj )
+                    if( obj && subType )
                     {
-                        typeInfo->GetEngine()->ReleaseScriptObject(obj, typeInfo->GetSubType());
+                        typeInfo->GetEngine()->ReleaseScriptObject(obj, subType);
                     }
                     operator delete(valueBuffer);
                 }
                 else if( subTypeId & asTYPEID_MASK_OBJECT )
                 {
-                    typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, typeInfo->GetSubType());
+                    if( subType )
+                    {
+                        typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, subType);
+                    }
+                    else
+                    {
+                        operator delete(valueBuffer);
+                    }
                 }
                 else
                 {
@@ -87,20 +105,29 @@ class ASOptional
                 return;
 
             hasValue = true;
+            asITypeInfo* subType = GetSubTypeInfo();
 
             if( subTypeId & asTYPEID_OBJHANDLE )
             {
                 valueBuffer = operator new(sizeof(void*));
                 void* obj = *(void**)ref;
                 *(void**)valueBuffer = obj;
-                if( obj != nullptr )
+                if( obj != nullptr && subType )
                 {
-                    typeInfo->GetEngine()->AddRefScriptObject(obj, typeInfo->GetSubType());
+                    typeInfo->GetEngine()->AddRefScriptObject(obj, subType);
                 }
             }
             else if( subTypeId & asTYPEID_MASK_OBJECT )
             {
-                valueBuffer = typeInfo->GetEngine()->CreateScriptObjectCopy(ref, typeInfo->GetSubType());
+                if( subType )
+                {
+                    valueBuffer = typeInfo->GetEngine()->CreateScriptObjectCopy(ref, subType);
+                }
+                else
+                {
+                    valueBuffer = operator new(subTypeSize);
+                    std::memcpy( valueBuffer, ref, subTypeSize );
+                }
             }
             else
             {
@@ -122,18 +149,27 @@ class ASOptional
                 return;
             }
 
+            asITypeInfo* subType = GetSubTypeInfo();
+
             if( subTypeId & asTYPEID_OBJHANDLE )
             {
                 void* obj = *(void**)valueBuffer;
                 *(void**)outRef = obj;
-                if( obj != nullptr )
+                if( obj != nullptr && subType )
                 {
-                    typeInfo->GetEngine()->AddRefScriptObject(obj, typeInfo->GetSubType());
+                    typeInfo->GetEngine()->AddRefScriptObject(obj, subType);
                 }
             }
             else if( subTypeId & asTYPEID_MASK_OBJECT )
             {
-                typeInfo->GetEngine()->AssignScriptObject(outRef, valueBuffer, typeInfo->GetSubType());
+                if( subType )
+                {
+                    typeInfo->GetEngine()->AssignScriptObject(outRef, valueBuffer, subType);
+                }
+                else
+                {
+                    std::memcpy( outRef, valueBuffer, subTypeSize );
+                }
             }
             else
             {
@@ -191,6 +227,13 @@ class ASOptional
             if( subTypeId & asTYPEID_OBJHANDLE )
             {
                 return valueBuffer;
+            }
+
+            asITypeInfo* subType = GetSubTypeInfo();
+
+            if( subType && (subType->GetFlags() & asOBJ_REF) )
+            {
+                return &valueBuffer;
             }
 
             return valueBuffer;

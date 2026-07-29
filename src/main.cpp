@@ -207,6 +207,8 @@ int main(int argc, char **argv) {
         
         // If debug mode and no script was provided, run all tests in Tests directory directly
         if (cleanArgs.size() < 2) {
+            Tests::Fails = 0;
+            Tests::Passes = 0;
             auto testFiles = FindTestScriptFiles();
             if (!testFiles.empty()) {
                 std::cout << "\n[Debug Mode] Found " << testFiles.size() << " test script(s) in Tests directory:\n";
