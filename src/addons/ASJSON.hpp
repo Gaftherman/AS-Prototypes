@@ -83,16 +83,17 @@ class ASJSON
             return obj;
         }
 
-// array<T> factory register type
-#define JSONFactoryArrayDECL(type) engine->RegisterObjectBehaviour( "JSON", asBEHAVE_FACTORY, "JSON@ f(const array<" #type ">&in)", asFUNCTION(ASJSON::JSONFactoryArray), asCALL_CDECL )
-
         // array<T> factory
         static ASJSON* JSONFactoryArray( CScriptArray* arr )
         {
             asIScriptContext* ctx = asGetActiveContext();
+
+            if( ctx == nullptr )
+                return nullptr;
+
             asIScriptEngine* engine = ctx->GetEngine();
 
-            if( ctx == nullptr || engine == nullptr )
+            if( engine == nullptr )
                 return nullptr;
 
             if( arr == nullptr )
@@ -278,10 +279,18 @@ class ASJSON
         }
 #endif
 
+        // ==================================================================
+        // START OF CONVERSIONS
+        // ==================================================================
+
+        // Alias to dumps without any Exception being thrown.
         CString to_string()
         {
             return ASJSON::dumps(this, -1, static_cast<int>(nlohmann::json::error_handler_t::replace) );
         }
+        // ==================================================================
+        // END OF CONVERSIONS
+        // ==================================================================
 
         bool is_null() const {
             return this->m_json.is_null();
@@ -331,12 +340,12 @@ class ASJSON
             REGISTER_OBJECT_BEHAVIOUR( "JSON", asBEHAVE_FACTORY, "JSON@ f( bool value )", asFUNCTION(ASJSON::JSONFactoryBool), asCALL_CDECL, "Constructs a JSON boolean value." );
 
             // array<T> register factory (Not dynamic)
-            JSONFactoryArrayDECL(int);
-            JSONFactoryArrayDECL(uint);
-            JSONFactoryArrayDECL(bool);
-            JSONFactoryArrayDECL(float);
-            JSONFactoryArrayDECL(string);
-            JSONFactoryArrayDECL(double);
+            REGISTER_OBJECT_BEHAVIOUR( "JSON", asBEHAVE_FACTORY, "JSON@ f(const array<int>&in)", asFUNCTION(ASJSON::JSONFactoryArray), asCALL_CDECL, "Constructs a JSON array value." );
+            REGISTER_OBJECT_BEHAVIOUR( "JSON", asBEHAVE_FACTORY, "JSON@ f(const array<uint>&in)", asFUNCTION(ASJSON::JSONFactoryArray), asCALL_CDECL, "Constructs a JSON array value." );
+            REGISTER_OBJECT_BEHAVIOUR( "JSON", asBEHAVE_FACTORY, "JSON@ f(const array<bool>&in)", asFUNCTION(ASJSON::JSONFactoryArray), asCALL_CDECL, "Constructs a JSON array value." );
+            REGISTER_OBJECT_BEHAVIOUR( "JSON", asBEHAVE_FACTORY, "JSON@ f(const array<float>&in)", asFUNCTION(ASJSON::JSONFactoryArray), asCALL_CDECL, "Constructs a JSON array value." );
+            REGISTER_OBJECT_BEHAVIOUR( "JSON", asBEHAVE_FACTORY, "JSON@ f(const array<string>&in)", asFUNCTION(ASJSON::JSONFactoryArray), asCALL_CDECL, "Constructs a JSON array value." );
+            REGISTER_OBJECT_BEHAVIOUR( "JSON", asBEHAVE_FACTORY, "JSON@ f(const array<double>&in)", asFUNCTION(ASJSON::JSONFactoryArray), asCALL_CDECL, "Constructs a JSON array value." );
 
             // Methods in json namespace.
             engine->SetDefaultNamespace( "json" );

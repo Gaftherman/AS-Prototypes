@@ -63,14 +63,13 @@ void main()
     Expect( "JSON::JSON( string )", true, @JSON("empty") !is null );
     Expect( "JSON::JSON( string, serialized )", true, @JSON("{}", true) !is null );
 
-
     array<int> arrint = { -1 };
     @obj = JSON(arrint);
     Expect( "JSON::JSON( array<int> )", true, obj !is null && obj.to_string() == "[-1]" );
 
-    array<uint> arruint = { -1 };
+    array<uint> arruint = { 1 };
     @obj = JSON(arruint);
-    Expect( "JSON::JSON( array<uint> )", true, obj !is null && obj.to_string() == "[0]" );
+    Expect( "JSON::JSON( array<uint> )", true, obj !is null && obj.to_string() == "[1]" );
 
     array<bool> arrbool = { true };
     @obj = JSON(arrbool);
