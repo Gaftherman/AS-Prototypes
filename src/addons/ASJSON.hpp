@@ -292,6 +292,17 @@ class ASJSON
         // END OF CONVERSIONS
         // ==================================================================
 
+        // ==================================================================
+        // START OF BUILDER PATTERNS
+        // ==================================================================
+        ASJSON* SetStrict( bool is_strict = true ) {
+            this->strict = is_strict;
+            return this;
+        }
+        // ==================================================================
+        // END OF BUILDER PATTERNS
+        // ==================================================================
+
         bool is_null() const {
             return this->m_json.is_null();
         }
@@ -377,6 +388,7 @@ class ASJSON
 
             // when false; JSON will silent fail. when true; JSON will raise exceptions.
             REGISTER_OBJECT_PROPERTY( "JSON", "bool strict", asOFFSET(ASJSON, strict), "When true, operations raise script exceptions on error; when false, operations fail silently." );
+            REGISTER_OBJECT_METHOD( "JSON", "JSON@ SetStrict( bool is_strict = true )", asMETHOD(ASJSON, SetStrict), asCALL_THISCALL, "When true, operations raise script exceptions on error; when false, operations fail silently." );
 
             REGISTER_OBJECT_METHOD( "JSON", "bool is_null() const", asMETHOD(ASJSON, is_null), asCALL_THISCALL, "Returns true if the JSON value is null." );
             REGISTER_OBJECT_METHOD( "JSON", "bool is_boolean() const", asMETHOD(ASJSON, is_boolean), asCALL_THISCALL, "Returns true if the JSON value is a boolean." );
