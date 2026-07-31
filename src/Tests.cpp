@@ -172,5 +172,7 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     GenerateScriptPredefined(engine, "../../as.predefined");
 
     engine->ShutDownAndRelease();
+
+    CHECK( Tests::Fails == 0 );
 }
 #endif
