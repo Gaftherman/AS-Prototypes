@@ -128,7 +128,7 @@ TEST_CASE( "AngelScript Test Directory Runner" )
         std::cout << Tests::Passes << " tests passed" << "\n";
     }
 
-    GenerateScriptPredefined(engine, "as.predefined");
+    GenerateScriptPredefined(engine, "../../as.predefined");
 
     engine->ShutDownAndRelease();
 }

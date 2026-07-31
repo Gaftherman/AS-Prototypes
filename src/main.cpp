@@ -1,3 +1,7 @@
+#ifndef NDEBUG
+#include <doctest/doctest.h>
+#endif
+
 #include <iostream>
 #include <string>
 #include <vector>

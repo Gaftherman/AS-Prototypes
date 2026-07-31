@@ -340,8 +340,8 @@ namespace
         std::string comment = ASDoc::GetEnumComment(e);
         ASDoc::printComment(stream, comment, indent);
 
-        stream << indent << "enum " << e->GetName() << " {\n";
-        std::string valIndent = indent + "\t";
+        stream << indent << "enum " << e->GetName() << "\n" << indent << "{\n";
+        std::string valIndent = indent + "    ";
         for (asUINT j = 0; j < e->GetEnumValueCount(); ++j)
         {
             const char* valName = e->GetEnumValueByIndex(j, nullptr);
@@ -380,8 +380,8 @@ namespace
             stream << ">";
         }
 
-        stream << "{\n";
-        std::string memberIndent = indent + "\t";
+        stream << "\n" << indent << "{\n";
+        std::string memberIndent = indent + "    ";
         for (asUINT j = 0; j < t->GetBehaviourCount(); ++j)
         {
             asEBehaviours behaviours;
@@ -516,8 +516,8 @@ void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& 
         {
             stream << "/// Addon: " << addon << "\n";
         }
-        stream << "namespace " << ns << " {\n";
-        std::string indent = "\t";
+        stream << "namespace " << ns << "\n{\n";
+        std::string indent = "    ";
 
         for (const auto* e : group.enums) printEnum(e, stream, indent);
         for (const auto* t : group.classes) printClassType(t, stream, indent);
