@@ -51,7 +51,7 @@ jobs:
           if [ "${{ runner.os }}" = "Windows" ]; then
             ./build/Debug/asrun.exe  --test
           else
-            ./build/asrun --no-pause
+            ./build/asrun --test
           fi
 
       - name: Configure CMake (Release Mode)

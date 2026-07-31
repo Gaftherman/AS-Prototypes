@@ -1,5 +1,3 @@
-#include <doctest/doctest.h>
-
 #include <iostream>
 #include <string>
 #include <vector>
