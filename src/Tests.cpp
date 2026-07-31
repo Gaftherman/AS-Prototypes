@@ -138,6 +138,8 @@ TEST_CASE( "AngelScript Test Directory Runner" )
                 std::cout << "[TEST] Running script: " << filePathString << "\n";
                 int result = ExecuteSingleScript( engine, filePathString, {} );
                 CHECK( result == 0 );
+                if( result != 0 )
+                    break;
             }
         }
     }
