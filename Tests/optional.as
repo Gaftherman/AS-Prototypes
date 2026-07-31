@@ -12,6 +12,10 @@ class pev
     }
 }
 
+optional<int> MethodReturnOptionalEmpty() { return {}; }
+optional<int> MethodReturnOptionalValid() { return {1}; }
+optional<int> MethodReturnOptionalInvalid() { return {1,2}; }
+
 void main()
 {
     title( "optional<T> class" );
@@ -39,4 +43,17 @@ void main()
     pev@ entvarHandle = pev( "SomeDude2" );
     optClassHandle.set(entvarHandle);
     Expect( "optional with class handles", true, entvarHandle is optClassHandle.value() );
+
+    Expect( "method return empty optional {}", true, !MethodReturnOptionalEmpty().has_value() );
+
+    auto optmet = MethodReturnOptionalValid();
+    Expect( "method return valid optional {1}", true, optmet.has_value() && optmet.value() == 1 );
+
+    try {
+        auto optmet2 = MethodReturnOptionalInvalid();
+        Expect( "method return invalid optional {1,2}", true, false );
+    }
+    catch {
+        Expect( "method return invalid optional {1,2}", true, true );
+    }
 }

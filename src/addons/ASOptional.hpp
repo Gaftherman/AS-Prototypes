@@ -135,7 +135,7 @@ class ASOptional
 
             if( !hasValue )
             {
-                if( ctx )
+                if( ctx != nullptr )
                     ctx->SetException( "null pointer value in optional!", true );
                 return;
             }
@@ -180,6 +180,30 @@ class ASOptional
             return opt;
         }
 
+        static ASOptional* FactoryGeneric( asITypeInfo* typeInfo, void* listBuffer )
+        {
+            asIScriptContext* ctx = asGetActiveContext();
+
+            asUINT* buffer = reinterpret_cast<asUINT*>(listBuffer);
+            asUINT elementCount = *buffer++; 
+
+            if( elementCount > 1 )
+            {
+                if( ctx != nullptr ) {
+                    ctx->SetException( "Too many arguments! Expected one.", true );
+                }
+
+                return nullptr;
+            }
+
+            if( elementCount == 0 )
+            {
+                return new ASOptional( typeInfo );
+            }
+
+            return ASOptional::FactoryWithValue( typeInfo, buffer );
+        }
+
         static void AssignValueWrapper( ASOptional* opt, void* valueRef )
         {
             if( opt )
@@ -198,7 +222,7 @@ class ASOptional
 
             if( !hasValue )
             {
-                if( ctx )
+                if( ctx != nullptr )
                     ctx->SetException( "null pointer value in optional!", true );
                 return nullptr;
             }
@@ -232,6 +256,9 @@ class ASOptional
             // Default constructor
             REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in)",
                 asFUNCTION((ASOptional*(*)(asITypeInfo*))ASOptional::Factory), asCALL_CDECL, "Constructs an empty optional container." );
+
+            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_LIST_FACTORY, "optional<T>@ f(int &in, const T &in value) { repeat T }",
+                asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryGeneric), asCALL_CDECL, "Constructs an optional container initialized with a generic initializer list" );
 
             REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const T &in value)",
                 asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryWithValue), asCALL_CDECL, "Constructs an optional container initialized with a value." );
