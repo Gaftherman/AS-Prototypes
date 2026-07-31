@@ -54,6 +54,7 @@ set(APP_SOURCES
     src/addon_registry.cpp
     src/as_predefined.cpp
     src/utility/CString.cpp
+    src/Tests.cpp
 )
 
 add_executable(asrun

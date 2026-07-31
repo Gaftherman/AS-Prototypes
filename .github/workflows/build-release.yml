@@ -49,9 +49,9 @@ jobs:
           echo " Running AngelScript Tests & Doctest Suite"
           echo "=========================================="
           if [ "${{ runner.os }}" = "Windows" ]; then
-            ./build/Debug/asrun.exe --no-pause --test
+            ./build/Debug/asrun.exe  --test
           else
-            ./build/asrun --no-pause --test
+            ./build/asrun --no-pause
           fi
 
       - name: Configure CMake (Release Mode)

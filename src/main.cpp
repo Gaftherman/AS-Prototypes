@@ -1,19 +1,14 @@
-#define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 
 #include <iostream>
 #include <string>
 #include <vector>
-#include <filesystem>
 
 #include <angelscript.h>
 #include <scriptbuilder/scriptbuilder.h>
 #include <scriptarray/scriptarray.h>
 
 #include "addon_registry.h"
-#include "as_predefined.h"
-
-namespace fs = std::filesystem;
 
 // Callback for AngelScript compiler messages and warnings
 void MessageCallback(const asSMessageInfo *msg, void *param) {
@@ -38,64 +33,24 @@ void PauseConsole() {
     std::getline(std::cin, dummy);
 }
 
-// Function to find test script paths in ../../Tests, ../Tests, Tests, etc.
-std::vector<fs::path> FindTestScriptFiles() {
-    std::vector<fs::path> paths;
-    std::vector<fs::path> candidates = {
-        "../../Tests",
-        "../Tests",
-        "Tests",
-        "../../tests",
-        "../tests",
-        "tests"
-    };
-
-    for (const auto& candidate : candidates) {
-        if (fs::exists(candidate) && fs::is_directory(candidate)) {
-            for (const auto& entry : fs::recursive_directory_iterator(candidate)) {
-                if (entry.is_regular_file() && entry.path().extension() == ".as") {
-                    paths.push_back(entry.path());
-                }
-            }
-            if (!paths.empty()) break;
-        }
-    }
-
-    // Sort files by modification date: oldest first, newest LAST
-    std::sort(paths.begin(), paths.end(), [](const fs::path& a, const fs::path& b) {
-        std::error_code ec1, ec2;
-        auto timeA = fs::last_write_time(a, ec1);
-        auto timeB = fs::last_write_time(b, ec2);
-        if (!ec1 && !ec2) {
-            return timeA < timeB;
-        }
-        return a.string() < b.string();
-    });
-
-    return paths;
-}
-
 // Helper to execute a single script file
 int ExecuteSingleScript(asIScriptEngine* engine, const std::string& scriptPath, const std::vector<std::string>& cleanArgs) {
     CScriptBuilder builder;
     int r = builder.StartNewModule(engine, "MainModule");
     if (r < 0) {
         std::cerr << "Failed to start new script module for: " << scriptPath << "\n";
-        Tests::Fails++;
         return 1;
     }
 
     r = builder.AddSectionFromFile(scriptPath.c_str());
     if (r < 0) {
         std::cerr << "Could not load or find script file: " << scriptPath << "\n";
-        Tests::Fails++;
         return 1;
     }
 
     r = builder.BuildModule();
     if (r < 0) {
         std::cerr << "Script compilation failed for: " << scriptPath << "\n";
-        Tests::Fails++;
         return 1;
     }
 
@@ -106,14 +61,12 @@ int ExecuteSingleScript(asIScriptEngine* engine, const std::string& scriptPath, 
 
     if (!func) {
         std::cerr << "Entry point 'void main()' or 'int main()' not found in script: " << scriptPath << "\n";
-        Tests::Fails++;
         return 1;
     }
 
     asIScriptContext *ctx = engine->CreateContext();
     if (!ctx) {
         std::cerr << "Failed to create execution context.\n";
-        Tests::Fails++;
         return 1;
     }
 
@@ -144,11 +97,9 @@ int ExecuteSingleScript(asIScriptEngine* engine, const std::string& scriptPath, 
             std::cerr << "Function:  " << ctx->GetExceptionFunction()->GetDeclaration() << "\n";
         }
         std::cerr << "Line:      " << ctx->GetExceptionLineNumber() << "\n";
-        Tests::Fails++;
         exitCode = -1;
     } else {
         std::cerr << "Execution failed for " << scriptPath << " with code: " << r << "\n";
-        Tests::Fails++;
         exitCode = -1;
     }
 
@@ -157,87 +108,26 @@ int ExecuteSingleScript(asIScriptEngine* engine, const std::string& scriptPath, 
     return exitCode;
 }
 
-// doctest suite for running test scripts from Tests directory
-TEST_CASE("AngelScript Test Directory Runner") {
-    auto testFiles = FindTestScriptFiles();
-    if (!testFiles.empty()) {
-        asIScriptEngine *engine = asCreateScriptEngine();
-        REQUIRE(engine != nullptr);
-        engine->SetMessageCallback(asFUNCTION(MessageCallback), nullptr, asCALL_CDECL);
-        REQUIRE(AddonRegistry::RegisterAllAddons(engine) == true);
-
-        for (const auto& filePath : testFiles) {
-            SUBCASE(filePath.string().c_str()) {
-                std::cout << "[TEST] Running script: " << filePath.string() << "\n";
-                int result = ExecuteSingleScript(engine, filePath.string(), {});
-                CHECK(result == 0);
-            }
-        }
-        engine->ShutDownAndRelease();
-    }
-}
-
 int main(int argc, char **argv) {
     bool shouldPause = true;
-    bool isDebug = false;
-
-#ifndef NDEBUG
-    isDebug = true;
-#endif
 
     // Check for flags
     std::vector<std::string> cleanArgs;
-    bool runTestsFlag = false;
 
     for (int i = 0; i < argc; ++i) {
         std::string arg = argv[i];
+#ifndef NDEBUG
+        if( arg == "--test" )
+        {
+            doctest::Context context;
+            return context.run();
+        }
+#endif
         if (arg == "--no-pause") {
             shouldPause = false;
-        } else if (arg == "--test" || arg == "--doctest") {
-            runTestsFlag = true;
         } else {
             cleanArgs.push_back(arg);
         }
-    }
-
-    // Run doctest if --test flag is passed or in Debug mode when no specific script is passed
-    if (runTestsFlag || (isDebug && cleanArgs.size() < 2)) {
-        doctest::Context context;
-        context.applyCommandLine(argc, argv);
-        int res = context.run();
-        
-        // If debug mode and no script was provided, run all tests in Tests directory directly
-        if (cleanArgs.size() < 2) {
-            Tests::Fails = 0;
-            Tests::Passes = 0;
-            auto testFiles = FindTestScriptFiles();
-            if (!testFiles.empty()) {
-                std::cout << "\n[Debug Mode] Found " << testFiles.size() << " test script(s) in Tests directory:\n";
-                asIScriptEngine *engine = asCreateScriptEngine();
-                if (engine) {
-                    engine->SetMessageCallback(asFUNCTION(MessageCallback), nullptr, asCALL_CDECL);
-                    if (AddonRegistry::RegisterAllAddons(engine)) {
-                        GenerateScriptPredefined(engine, "as.predefined");
-                        for (const auto& testFile : testFiles) {
-                            std::cout << "\n--> Running: " << testFile.string() << "\n";
-                            ExecuteSingleScript(engine, testFile.string(), cleanArgs);
-                        }
-                    }
-                    engine->ShutDownAndRelease();
-                }
-            } else {
-                std::cout << "\n[Debug Mode] No test scripts found in ../../Tests/ or Tests/\n";
-            }
-        }
-
-        if (Tests::Fails > 0) {
-            std::cerr << Tests::Fails << " tests failed out of " << (Tests::Fails + Tests::Passes) << "\n";
-        } else if (Tests::Passes > 0) {
-            std::cout << Tests::Passes << " tests passed" << "\n";
-        }
-
-        if (shouldPause) PauseConsole();
-        return res;
     }
 
     if (cleanArgs.size() < 2) {
@@ -275,17 +165,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    GenerateScriptPredefined(engine, "as.predefined");
-
     int exitCode = ExecuteSingleScript(engine, scriptPath, cleanArgs);
 
     engine->ShutDownAndRelease();
-
-    if (Tests::Fails > 0) {
-        std::cerr << Tests::Fails << " tests failed out of " << (Tests::Fails + Tests::Passes) << "\n";
-    } else if (Tests::Passes > 0) {
-        std::cout << Tests::Passes << " tests passed" << "\n";
-    }
 
     if (shouldPause) {
         PauseConsole();

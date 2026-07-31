@@ -18,18 +18,18 @@ Utiliza CMake para configurar y compilar el ejecutable.
 # Configurar el directorio de construcción
 cmake -B build
 
-# Compilar el binario en Release
-cmake --build build --config Release
+# Compilar el binario en Debug
+cmake --build build --config Debug
 ```
 
-El ejecutable compilado se ubicará en `build/Release/asrun.exe`.
+El ejecutable compilado se ubicará en `build/Debug/asrun.exe`.
 
 ## Uso
 
 Pasa cualquier archivo de AngelScript `.as` directamente a `asrun`:
 
 ```powershell
-.\build\Release\asrun.exe ruta/al/script.as
+.\build\Debug\asrun.exe ruta/al/script.as
 ```
 
 ### Ejecución de Pruebas
@@ -37,7 +37,7 @@ Pasa cualquier archivo de AngelScript `.as` directamente a `asrun`:
 Ejecuta la suite de pruebas integrada con:
 
 ```powershell
-.\build\Release\asrun.exe --test --no-pause
+.\build\Debug\asrun.exe --test
 ```
 
 ## Características y Plugins
