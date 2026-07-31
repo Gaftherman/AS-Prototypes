@@ -1,13 +1,13 @@
 // hello.as - Basic AngelScript example
 
 void main() {
-    println("==========================================");
-    println(" Hello from AngelScript CLI Runner! ");
-    println("==========================================");
+    Console::PrintLine("==========================================");
+    Console::PrintLine(" Hello from AngelScript CLI Runner! ");
+    Console::PrintLine("==========================================");
 
     string user = "Developer";
     int year = 2026;
 
-    println("User: " + user);
-    println("Year: " + year);
+    Console::PrintLine("User: " + user);
+    Console::PrintLine("Year: " + year);
 }

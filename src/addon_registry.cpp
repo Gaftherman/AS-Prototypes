@@ -1,8 +1,5 @@
 #include "addon_registry.h"
 
-#include <iostream>
-#include <string>
-
 // AngelScript add-ons headers
 #include <scriptbuilder/scriptbuilder.h>
 #include <scriptstdstring/scriptstdstring.h>
@@ -15,28 +12,16 @@
 #include <datetime/datetime.h>
 
 // Our add-ons prototypes
+#include "addons/ASConsole.hpp"
 #include "addons/ASDispose.hpp"
 #include "addons/ASException.hpp"
 #include "addons/ASJSON.hpp"
 #include "addons/ASOptional.hpp"
 
-namespace {
-    void ScriptPrint(const std::string &msg) {
-        std::cout << msg;
-        std::cout.flush();
-    }
-
-    void ScriptPrintln(const std::string &msg) {
-        std::cout << msg << std::endl;
-    }
-}
-
 namespace AddonRegistry {
 
 bool RegisterAllAddons(asIScriptEngine* engine) {
     if (!engine) return false;
-
-    int r = 0;
 
     // 1. Base std::string
     RegisterStdString(engine);
@@ -54,12 +39,6 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     RegisterScriptFile(engine);
     RegisterScriptFileSystem(engine);
 
-    // 6. Console I/O functions
-    r = REGISTER_GLOBAL_FUNCTION("void print(const string &in)", asFUNCTION(ScriptPrint), asCALL_CDECL, "Prints a string to the console output.");
-    if (r < 0) return false;
-    r = REGISTER_GLOBAL_FUNCTION("void println(const string &in)", asFUNCTION(ScriptPrintln), asCALL_CDECL, "Prints a string to the console output followed by a newline.");
-    if (r < 0) return false;
-
     // 7. Dictionary
     RegisterScriptDictionary(engine);
 
@@ -68,6 +47,8 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
 
     // 9. Script Handles
     RegisterScriptHandle(engine);
+
+    ASConsole::Register( engine );
 
     ASException::Register( engine );
     ASOptional::Register( engine );

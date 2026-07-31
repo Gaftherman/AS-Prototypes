@@ -12,7 +12,7 @@ class pev
 
 void main()
 {
-    println("--- AngelScript optional Test ---");
+    Console::PrintLine("--- AngelScript optional Test ---");
 
     optional<int> optId;
     Expect( "Empty optional", false, optId.has_value() );

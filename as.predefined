@@ -267,17 +267,12 @@ int64 parseInt(const string&in, uint base = 10, uint&out byteCount = 0);
 uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
 double parseFloat(const string&in, uint&out byteCount = 0);
 string join(const string[]&in, const string&in);
-/// Prints a string to the console output.
-void print(const string&in);
-/// Prints a string to the console output followed by a newline.
-void println(const string&in);
 float fpFromIEEE(uint);
 uint fpToIEEE(float);
 double fpFromIEEE(uint64);
 uint64 fpToIEEE(double);
 bool closeTo(float, float, float = 0.00001f);
 bool closeTo(double, double, double = 0.0000000001);
-/// Prints a string to the console output followed by a newline.
 float cos(float);
 float sin(float);
 float tan(float);
@@ -289,12 +284,11 @@ float cosh(float);
 float sinh(float);
 float tanh(float);
 float log(float);
-/// Prints a string to the console output followed by a newline.
 float log10(float);
-/// Addon: ASException
-/// Returns the current active exception object.
 float pow(float, float);
 float sqrt(float);
+/// Addon: ASException
+/// Raises a script exception with an optional metadata dictionary.
 float ceil(float);
 float abs(float);
 float floor(float);
@@ -308,6 +302,14 @@ Exception@ GetException();
 /// Addon: ASDispose
 /// Disposes of the given script object handle.
 bool Dispose(?&out);
+/// Addon: ASConsole
+namespace Console
+{
+    /// Print to console. uses fmt library to replace "{}" arguments.
+    void Print(const string&in msg);
+    /// Print line to console. uses fmt library to replace "{}" arguments.
+    void PrintLine(const string&in msg);
+}
 /// Addon: Tests
 namespace Tests
 {

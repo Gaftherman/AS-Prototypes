@@ -4,13 +4,13 @@ class SomeClass
 {
     ~SomeClass()
     {
-        println( "SomeClass destroyed." );
+        Console::PrintLine( "SomeClass destroyed." );
     }
 }
 
 void main()
 {
-    println("--- AngelScript Dispose Test ---");
+    Console::PrintLine("--- AngelScript Dispose Test ---");
 
 #if FALSE
     SomeClass@ someClassHandle = SomeClass();

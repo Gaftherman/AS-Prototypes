@@ -1,13 +1,13 @@
 // array_dict_test.as - Demonstrates scriptarray and scriptdictionary add-ons
 
 void main() {
-    println("--- AngelScript Array & Dictionary Test ---");
+    Console::PrintLine("--- AngelScript Array & Dictionary Test ---");
 
     // Dynamic Array Test
     array<string> fruits = {"Apple", "Banana", "Cherry", "Dragonfruit"};
-    println("Fruits count: " + fruits.length());
+    Console::PrintLine("Fruits count: " + fruits.length());
     for (uint i = 0; i < fruits.length(); ++i) {
-        println("  [" + i + "] " + fruits[i]);
+        Console::PrintLine("  [" + i + "] " + fruits[i]);
     }
 
     // Dictionary Test
@@ -18,5 +18,5 @@ void main() {
 
     int aliceScore = 0;
     scores.get("Alice", aliceScore);
-    println("Alice's Score: " + aliceScore);
+    Console::PrintLine("Alice's Score: " + aliceScore);
 }

@@ -2,14 +2,14 @@ using namespace Tests;
 
 void main()
 {
-    println("--- AngelScript json Test ---");
+    Console::PrintLine("--- AngelScript json Test ---");
 
     JSON@ validObject = json::loads( "{\"this is a valid key\":\"in a valid object\"}" );
     Expect( "json::loads valid", true, validObject !is null );
 
     string deserialized = json::dumps( validObject );
     Expect( "json::dumps valid", true, deserialized != "" );
-//    println( "Serialized: " + deserialized );
+//    Console::PrintLine( "Serialized: " + deserialized );
 
     bool result = true;
 
