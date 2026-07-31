@@ -58,11 +58,13 @@ class ASException
             if( ctx == nullptr )
                 return nullptr;
 
+#if 0
             if( ctx->GetState() != asEXECUTION_EXCEPTION )
             {
                 ctx->SetException( "null pointer error: Can not call GetException outside of a 'catch' block!", false );
                 return nullptr;
             }
+#endif
 
             const char* scriptSection = nullptr;
             const asIScriptFunction* function = ctx->GetExceptionFunction();
