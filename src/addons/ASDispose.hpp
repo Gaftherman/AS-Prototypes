@@ -3,29 +3,48 @@
 
 namespace ASDispose
 {
-    static bool Dispose( asIScriptObject* obj, int typeId )
+    static bool Dispose( void* mem, int typeId )
     {
-        if( obj != nullptr )
-        {
-            if( asIScriptContext* ctx = asGetActiveContext(); ctx != nullptr )
-            {
-                if( asIScriptEngine* engine = ctx->GetEngine(); engine != nullptr )
-                {
-                    if( typeId & asTYPEID_OBJHANDLE )
-                    {
-                        // -TODO Como eliminar la wea totalmente de toda referencia
-                        return true;
-                    }
-                }
+        if( mem == nullptr )
+            return false;
 
-                ctx->SetException( "Can not Dispose of a non-handle object!", true );
-            }
+        asIScriptContext* ctx = asGetActiveContext();
+
+        if( !ctx )
+            return false;
+
+        asIScriptEngine* engine = ctx->GetEngine();
+
+        if( !engine )
+            return false;
+
+        // No primitive deletions!
+        if( !( typeId & asTYPEID_MASK_OBJECT ) )
+        {
+            ctx->SetException( "Cannot dispose of a non-object type!", true );
+            return false;
         }
+
+        // -TODO Exception if the object provided is been marked as "const"
+        // ctx->SetException( "Cannot dispose of a const object!", true );
+
+        asIScriptObject** objPtr = reinterpret_cast<asIScriptObject**>(mem);
+
+        if( !objPtr )
+            return false;
+
+        if( asIScriptObject* obj = *objPtr; obj != nullptr )
+        {
+            // -TODO If the input object is a handle remove all references to it
+            // -TODO If the input is a static class delete it and construct a new fresh class with all properties to default
+//            return true;
+        }
+
         return false;
     }
 
     static inline void Register( asIScriptEngine* engine )
     {
-        REGISTER_GLOBAL_FUNCTION( "bool Dispose( ?&out )", asFUNCTION(&ASDispose::Dispose), asCALL_CDECL, "Disposes of the given script object handle." );
+        engine->RegisterGlobalFunction( "bool Dispose( ?&in )", asFUNCTION(ASDispose::Dispose), asCALL_CDECL );
     }
 }

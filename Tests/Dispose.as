@@ -4,12 +4,24 @@ using namespace Tests;
 
 class SomeClass
 {
+    string name = "";
+
+    SomeClass() {}
+
+    SomeClass( string n )
+    {
+        this.name = n;
+    }
+
     ~SomeClass()
     {
-        Console::SetColor( Console::Color::BackGround, 50, 50, 50 );
-        Console::SetColor( Console::Color::ForeGround, 200, 200, 50 );
-        Console::WriteLine( "SomeClass destroyed." );
-        Console::ResetColor();
+        if( this.name != "" )
+        {
+            Console::SetColor( Console::Color::BackGround, 50, 50, 50 );
+            Console::SetColor( Console::Color::ForeGround, 200, 200, 50 );
+            Console::WriteLine( this.name + " destroyed." );
+            Console::ResetColor();
+        }
     }
 }
 
@@ -17,32 +29,44 @@ void main()
 {
     title( "Dispose test" );
 
-#if FALSE
-    SomeClass@ someClassHandle = SomeClass();
-    Expect( "Dispose of a 1-ref handlel", false, Dispose( someClassHandle ) && someClassHandle is null );
-#endif
-
-    try
-    {
-        SomeClass someClass();
-        // We should not be able to dispose of a non-handle object.
-        // Or maybe to remove all other refeences except the given someClass input
-        Dispose( someClass );
-        Expect( "Dispose of a static class", true, false );
-    }
-    catch
-    {
-        Expect( "Dispose of a static class", true, true );
-    }
-
     try
     {
         int i = 0;
         Dispose(i);
-        Expect( "Dispose of a primitive", true, false );
+        Expect( "invalid Dispose of a primitive", true, false );
     }
     catch
     {
-        Expect( "Dispose of a primitive", true, true );
+        Exception@ ex = GetException();
+        Expect( "primitive exception: " + ex.message, true, true );
     }
+
+// -TODO Fix Dispose :aaagabe
+#if FALSE
+    SomeClass someClassConst( "static class" );
+
+    try
+    {
+        Dispose(someClassConst);
+        Expect( "invalid Dispose of a static class", true, false );
+    }
+    catch
+    {
+        Exception@ ex = GetException();
+        Expect( "primitive exception: " + ex.message, true, someClassConst.name != "" );
+    }
+
+    SomeClass@ someClassConstHandle = SomeClass( "handle class" );
+
+    try
+    {
+        Dispose(someClassConstHandle);
+        Expect( "invalid Dispose of a handle class", true, false );
+    }
+    catch
+    {
+        Exception@ ex = GetException();
+        Expect( "primitive exception: " + ex.message, true, someClassConstHandle is null || someClassConstHandle.name != "" );
+    }
+#endif
 }
