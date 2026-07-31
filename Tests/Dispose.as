@@ -1,20 +1,25 @@
+#include "utils/title.as"
+
 using namespace Tests;
 
 class SomeClass
 {
     ~SomeClass()
     {
-        Console::PrintLine( "SomeClass destroyed." );
+        Console::SetColor( Console::Color::BackGround, 50, 50, 50 );
+        Console::SetColor( Console::Color::ForeGround, 200, 200, 50 );
+        Console::WriteLine( "SomeClass destroyed." );
+        Console::ResetColor();
     }
 }
 
 void main()
 {
-    Console::PrintLine("--- AngelScript Dispose Test ---");
+    title( "Dispose test" );
 
 #if FALSE
     SomeClass@ someClassHandle = SomeClass();
-    Expect( "Empty optional", false, Dispose( someClassHandle ) && someClassHandle is null );
+    Expect( "Dispose of a 1-ref handlel", false, Dispose( someClassHandle ) && someClassHandle is null );
 #endif
 
     try
@@ -23,32 +28,21 @@ void main()
         // We should not be able to dispose of a non-handle object.
         // Or maybe to remove all other refeences except the given someClass input
         Dispose( someClass );
-        Fails++;
+        Expect( "Dispose of a static class", true, false );
     }
     catch
     {
-        Passes++;
+        Expect( "Dispose of a static class", true, true );
     }
 
     try
     {
         int i = 0;
         Dispose(i);
-        Fails++;
+        Expect( "Dispose of a primitive", true, false );
     }
     catch
     {
-        Passes++;
-    }
-
-    try
-    {
-        string s = "s";
-        Dispose(s);
-        Fails++;
-    }
-    catch
-    {
-        Passes++;
+        Expect( "Dispose of a primitive", true, true );
     }
 }

@@ -5,10 +5,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <array>
 #include <filesystem>
 
 #include "addon_registry.h"
 #include "as_predefined.h"
+
+#include "addons/ASConsole.hpp"
 
 namespace fs = std::filesystem;
 
@@ -23,11 +26,17 @@ namespace Tests
 
         if( ctx != nullptr && expected == condition )
         {
-            std::cout << "Passed test \"" << title.c_str() << "\"" << "\n";
+            ASConsole::SetColor( ASConsole::Color::ForeGround, 60, 255, 60 );
+            ASConsole::Write( "Passed" );
+            ASConsole::ResetColor();
+            std::cout << " test \"" << title.c_str() << "\"" << "\n";
             Tests::Passes++;
             return true;
         }
-        std::cerr << "Failed test \"" << title.c_str() << "\"" << "\n";
+        ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
+        ASConsole::Write( "Failed" );
+        ASConsole::ResetColor();
+        std::cerr << " test \"" << title.c_str() << "\"" << "\n";
         Tests::Fails++;
         return false;
     }
@@ -60,7 +69,8 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     auto FindTestScriptFiles = []() -> std::vector<fs::path>
     {
         std::vector<fs::path> paths;
-        std::vector<fs::path> candidates = {
+
+        constexpr std::array candidates = {
             "../../Tests",
             "../Tests",
             "Tests",
@@ -69,27 +79,44 @@ TEST_CASE( "AngelScript Test Directory Runner" )
             "tests"
         };
 
-        for (const auto& candidate : candidates) {
-            if (fs::exists(candidate) && fs::is_directory(candidate)) {
-                for (const auto& entry : fs::recursive_directory_iterator(candidate)) {
-                    if (entry.is_regular_file() && entry.path().extension() == ".as") {
-                        paths.push_back(entry.path());
-                    }
+        for( const auto& candidate : candidates )
+        {
+            fs::path dir(candidate);
+
+            std::error_code ec;
+
+            if( !fs::exists( dir, ec ) || !fs::is_directory( dir, ec ) )
+                continue;
+
+            for( const auto& entry : fs::directory_iterator( dir, ec ) )
+            {
+                if( !entry.is_regular_file() )
+                    continue;
+
+                const auto& path = entry.path();
+
+                if( path.extension() == ".as" )
+                {
+                    paths.emplace_back( path );
                 }
-                if (!paths.empty()) break;
             }
+
+            if( !paths.empty() )
+                break;
         }
 
-        // Sort files by modification date: oldest first, newest LAST
-        std::sort(paths.begin(), paths.end(), [](const fs::path& a, const fs::path& b) {
+        std::sort( paths.begin(), paths.end(), []( const fs::path& a, const fs::path& b )
+        {
             std::error_code ec1, ec2;
-            auto timeA = fs::last_write_time(a, ec1);
-            auto timeB = fs::last_write_time(b, ec2);
-            if (!ec1 && !ec2) {
-                return timeA < timeB;
-            }
-            return a.string() < b.string();
-        });
+
+            auto ta = fs::last_write_time( a, ec1 );
+            auto tb = fs::last_write_time( b, ec2 );
+
+            if( !ec1 && !ec2 )
+                return ta < tb;
+
+            return a.native() < b.native();
+        } );
 
         return paths;
     };
@@ -116,16 +143,28 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     }
     else
     {
-        std::cout << "\n[Tests] No test scripts found in ../../Tests/ or Tests/\n";
+        ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
+        ASConsole::WriteLine( "No test scripts found in ../../Tests/" );
+        ASConsole::ResetColor();
     }
+
+    ASConsole::SetColor( ASConsole::Color::BackGround, 100, 100, 255 );
+    ASConsole::Write( ">" );
+    ASConsole::ResetColor();
 
     if( Tests::Fails > 0 )
     {
-        std::cerr << Tests::Fails << " tests failed out of " << (Tests::Fails + Tests::Passes) << "\n";
+        ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
+        std::cerr << " " << Tests::Fails << " tests failed out of " << (Tests::Fails + Tests::Passes);
+        ASConsole::WriteLineEmpty();
+        ASConsole::ResetColor();
     }
     else if( Tests::Passes > 0 )
     {
-        std::cout << Tests::Passes << " tests passed" << "\n";
+        ASConsole::SetColor( ASConsole::Color::ForeGround, 60, 255, 60 );
+        std::cout << " " << Tests::Passes << " tests passed";
+        ASConsole::WriteLineEmpty();
+        ASConsole::ResetColor();
     }
 
     GenerateScriptPredefined(engine, "../../as.predefined");

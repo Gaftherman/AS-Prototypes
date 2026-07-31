@@ -1,3 +1,5 @@
+#include "utils/title.as"
+
 using namespace Tests;
 
 class pev
@@ -12,7 +14,7 @@ class pev
 
 void main()
 {
-    Console::PrintLine("--- AngelScript optional Test ---");
+    title( "optional<T> class" );
 
     optional<int> optId;
     Expect( "Empty optional", false, optId.has_value() );

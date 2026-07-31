@@ -1,15 +1,17 @@
+#include "utils/title.as"
+
 using namespace Tests;
 
 void main()
 {
-    Console::PrintLine("--- AngelScript json Test ---");
+    title( "JSON class & methods" );
 
     JSON@ validObject = json::loads( "{\"this is a valid key\":\"in a valid object\"}" );
     Expect( "json::loads valid", true, validObject !is null );
 
     string deserialized = json::dumps( validObject );
     Expect( "json::dumps valid", true, deserialized != "" );
-//    Console::PrintLine( "Serialized: " + deserialized );
+//    Console::WriteLine( "Serialized: " + deserialized );
 
     bool result = true;
 

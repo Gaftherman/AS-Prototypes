@@ -287,8 +287,6 @@ float log(float);
 float log10(float);
 float pow(float, float);
 float sqrt(float);
-/// Addon: ASException
-/// Raises a script exception with an optional metadata dictionary.
 float ceil(float);
 float abs(float);
 float floor(float);
@@ -305,10 +303,30 @@ bool Dispose(?&out);
 /// Addon: ASConsole
 namespace Console
 {
-    /// Print to console. uses fmt library to replace "{}" arguments.
-    void Print(const string&in msg);
-    /// Print line to console. uses fmt library to replace "{}" arguments.
-    void PrintLine(const string&in msg);
+    /// Console color.
+    enum Color
+    {
+        /// Console text color.
+        ForeGround,
+        /// Console background color.
+        BackGround,
+        /// Both console text and background colors.
+        Both
+    }
+    /// Print to the console.
+    void Write(const string&in msg);
+    /// Print line to the console.
+    void WriteLine(const string&in msg);
+    /// Print line to the console.
+    void WriteLine();
+    /// Set the console color code based on the given RGB values.
+    void SetColor(Color target, int red, int green, int blue);
+    /// Reset the console color code.
+    void ResetColor(Color target = Color::Both);
+    /// Represents the text color in the console output.
+    string ForegroundColor;
+    /// Represents the background color in the console output.
+    string BackgroundColor;
 }
 /// Addon: Tests
 namespace Tests

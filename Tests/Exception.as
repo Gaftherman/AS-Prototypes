@@ -1,3 +1,5 @@
+#include "utils/title.as"
+
 using namespace Tests;
 
 bool throwTest()
@@ -11,11 +13,11 @@ bool throwTest()
 #if FALSE
         Exception@ ex = GetException();
 
-        Console::PrintLine( "ex.func: " + ex.func );
-        Console::PrintLine( "ex.line: " + ex.line );
-        Console::PrintLine( "ex.sect: " + ex.sect );
-        Console::PrintLine( "ex.message: " + ex.message );
-        Console::PrintLine( "ex.stack: " + ex.stack );
+        Console::WriteLine( "ex.func: " + ex.func );
+        Console::WriteLine( "ex.line: " + ex.line );
+        Console::WriteLine( "ex.sect: " + ex.sect );
+        Console::WriteLine( "ex.message: " + ex.message );
+        Console::WriteLine( "ex.stack: " + ex.stack );
 #endif
 
         return true;
@@ -26,7 +28,7 @@ bool throwTest()
 
 void main()
 {
-    Console::PrintLine("--- AngelScript Exception Test ---");
+    title( "Exception handler class" );
 
     Expect( "Exception catch", true, throwTest() );
 }

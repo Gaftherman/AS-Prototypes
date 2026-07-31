@@ -12,6 +12,8 @@
 
 #include "addon_registry.h"
 
+#include "addons/ASConsole.hpp"
+
 // Callback for AngelScript compiler messages and warnings
 void MessageCallback(const asSMessageInfo *msg, void *param) {
     (void)param;
@@ -87,6 +89,9 @@ int ExecuteSingleScript(asIScriptEngine* engine, const std::string& scriptPath, 
     }
 
     r = ctx->Execute();
+
+    ASConsole::ResetColor(); // Reset colors if a module has set them
+
     int exitCode = 0;
     if (r == asEXECUTION_FINISHED) {
         if (func->GetReturnTypeId() == asTYPEID_INT32) {
