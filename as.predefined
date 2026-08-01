@@ -214,8 +214,6 @@ class JSON
 {
     /// Returns a string representation of the JSON object.
     string to_string() const;
-    /// When true, operations raise script exceptions on error; when false, operations fail silently.
-    JSON@ SetStrict(bool is_strict = true);
     /// Returns true if the JSON value is null.
     bool is_null() const;
     /// Returns true if the JSON value is a boolean.
@@ -238,17 +236,25 @@ class JSON
     bool is_primitive() const;
     /// Returns true if the JSON value is structured (object or array).
     bool is_structured() const;
-    /// When true, operations raise script exceptions on error; when false, operations fail silently.
-    bool strict;
+    /// Defines how should json handle errors.
+    json::error_handler m_ErrorHandlerMode;
 }
 uint scan(const string&in str, ?&out...);
 string format(const string&in fmt, const ?&in...);
 string formatInt(int64 val, const string&in options = "", uint width = 0);
+/// Addon: ASException
+/// Line of where the exception was raised.
 string formatUInt(uint64 val, const string&in options = "", uint width = 0);
 string formatFloat(double val, const string&in options = "", uint width = 0, uint precision = 0);
 int64 parseInt(const string&in, uint base = 10, uint&out byteCount = 0);
+/// Addon: ASException
+/// Get the call stack in string form.
 uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
+/// Addon: ASException
+/// Get the current exception message.
 double parseFloat(const string&in, uint&out byteCount = 0);
+/// Addon: ASException
+/// Get the call stack in string form.
 string join(const string[]&in, const string&in);
 float fpFromIEEE(uint);
 uint fpToIEEE(float);

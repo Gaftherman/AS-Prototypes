@@ -16,7 +16,7 @@ class ASJSON
 
     public:
         nlohmann::json m_json;
-        bool strict = true;
+        nlohmann::json::error_handler_t m_ErrorHandlerMode = nlohmann::json::error_handler_t::strict;
 
         ASJSON() : refCount(1) { }
 
@@ -295,10 +295,6 @@ class ASJSON
         // ==================================================================
         // START OF BUILDER PATTERNS
         // ==================================================================
-        ASJSON* SetStrict( bool is_strict = true ) {
-            this->strict = is_strict;
-            return this;
-        }
         // ==================================================================
         // END OF BUILDER PATTERNS
         // ==================================================================
@@ -386,9 +382,7 @@ class ASJSON
             // Alias to json::dumps using indents -1 and error_handler_t::ignore. this is exception-safe to print or debug in AS
             REGISTER_OBJECT_METHOD( "JSON", "string to_string() const", asMETHOD(ASJSON, to_string), asCALL_THISCALL, "Returns a string representation of the JSON object." );
 
-            // when false; JSON will silent fail. when true; JSON will raise exceptions.
-            REGISTER_OBJECT_PROPERTY( "JSON", "bool strict", asOFFSET(ASJSON, strict), "When true, operations raise script exceptions on error; when false, operations fail silently." );
-            REGISTER_OBJECT_METHOD( "JSON", "JSON@ SetStrict( bool is_strict = true )", asMETHOD(ASJSON, SetStrict), asCALL_THISCALL, "When true, operations raise script exceptions on error; when false, operations fail silently." );
+            REGISTER_OBJECT_PROPERTY( "JSON", "json::error_handler m_ErrorHandlerMode", asOFFSET(ASJSON, m_ErrorHandlerMode), "Defines how should json handle errors." );
 
             REGISTER_OBJECT_METHOD( "JSON", "bool is_null() const", asMETHOD(ASJSON, is_null), asCALL_THISCALL, "Returns true if the JSON value is null." );
             REGISTER_OBJECT_METHOD( "JSON", "bool is_boolean() const", asMETHOD(ASJSON, is_boolean), asCALL_THISCALL, "Returns true if the JSON value is a boolean." );

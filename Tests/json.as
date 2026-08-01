@@ -57,7 +57,7 @@ void main()
     @obj = json::loads( "[1]" );
     Expect( "JSON::to_string() valid", true, obj.to_string() == "[1]" );
 
-    Expect( "JSON::strict default true", true, obj.strict );
+    Expect( "JSON::m_ErrorHandlerMode default to strict", true, obj.m_ErrorHandlerMode == json::error_handler::strict );
 
     Expect( "JSON::JSON( float )", true, @JSON(1.0f) !is null );
     Expect( "JSON::JSON( int )", true, @JSON(1) !is null );
