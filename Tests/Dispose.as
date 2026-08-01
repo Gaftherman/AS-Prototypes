@@ -37,8 +37,7 @@ void main()
     }
     catch
     {
-        Exception@ ex = GetException();
-        Expect( "primitive exception: " + ex.message, true, true );
+        Expect( "primitive exception: " + Exception::Message(), true, true );
     }
 
 // -TODO Fix Dispose :aaagabe
@@ -52,8 +51,7 @@ void main()
     }
     catch
     {
-        Exception@ ex = GetException();
-        Expect( "primitive exception: " + ex.message, true, someClassConst.name != "" );
+        Expect( "primitive exception: " + Exception::Message(), true, someClassConst.name != "" );
     }
 
     SomeClass@ someClassConstHandle = SomeClass( "handle class" );
@@ -65,8 +63,7 @@ void main()
     }
     catch
     {
-        Exception@ ex = GetException();
-        Expect( "primitive exception: " + ex.message, true, someClassConstHandle is null || someClassConstHandle.name != "" );
+        Expect( "primitive exception: " + Exception::Message(), true, someClassConstHandle is null || someClassConstHandle.name != "" );
     }
 #endif
 }
