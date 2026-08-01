@@ -14,6 +14,9 @@ class pev
 
 #if ASOPTIONAL_ADD_NULLOPT
 optional<double> MethodReturnNullOpt() { return nullopt; }
+void MethodArgumentNullOptionalEmpty( optional<int> iOpt = nullopt ) {
+    Expect("method with optional argument set to empty", true, iOpt.has_value() && iOpt.value() == 1 );
+}
 #endif
 optional<int> MethodReturnOptionalEmpty() { return {}; }
 optional<int> MethodReturnOptionalValid() { return {1}; }
@@ -21,6 +24,13 @@ optional<int> MethodReturnOptionalInvalid() { return {1,2}; }
 void MethodOptionalImplicitConstruct( optional<int> iOpt ) {
     Expect("method with optional argument", true, iOpt.has_value() && iOpt.value() == 1 );
 }
+
+// -TODO Allow for these type of constructos https://github.com/Gaftherman/AS-Prototypes/issues/7
+#if FALSE
+void MethodArgumentOptionalEmpty( optional<int> iOpt = optional<int>() ) {
+    Expect("method with optional argument set to empty", true, iOpt.has_value() && iOpt.value() == 1 );
+}
+#endif
 
 void main()
 {
@@ -65,9 +75,14 @@ void main()
 
     MethodOptionalImplicitConstruct(1);
 
+#if FALSE
+    MethodArgumentOptionalEmpty();
+#endif
+
 #if ASOPTIONAL_ADD_NULLOPT
     optional<string> optFromNull(nullopt);
     Expect( "optional construct with nullopt", true, !optFromNull.has_value() );
     Expect( "optional return with nullopt", true, !MethodReturnNullOpt().has_value() );
+    MethodArgumentNullOptionalEmpty();
 #endif
 }
