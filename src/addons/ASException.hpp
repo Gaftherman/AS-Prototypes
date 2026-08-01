@@ -102,7 +102,14 @@ namespace ASException
         return str;
     }
 
-    static bool ScriptSection( CString* absolute, CString* relative, CString* fileName )
+    static void ScriptSection(
+        CString* absolute,
+        CString* relative,
+        CString* fileName,
+        CString* methodName,
+        CString* nameSpace,
+        CString* objectName
+    )
     {
         CString str;
 
@@ -110,41 +117,75 @@ namespace ASException
         {
             auto moduleData = moduleDataOpt.value();
 
-            std::filesystem::path& section = moduleData.first->ScriptSection;
-
-            if( section.empty() )
+            // Build paths
+            if( absolute != nullptr || relative != nullptr || fileName != nullptr )
             {
-                const char* scriptSection = nullptr;
-                moduleData.second->GetExceptionLineNumber( 0, &scriptSection );
+                std::filesystem::path& section = moduleData.first->ScriptSection;
 
-                if( !scriptSection )
-                    return false;
+                if( section.empty() )
+                {
+                    const char* scriptSection = nullptr;
+                    moduleData.second->GetExceptionLineNumber( 0, &scriptSection );
 
-                // Format path
-                moduleData.first->ScriptSection = std::filesystem::path( scriptSection );
+                    if( scriptSection != nullptr )
+                    {
+                        // Format path
+                        moduleData.first->ScriptSection = std::filesystem::path( scriptSection );
+                    }
+                }
+
+                if( !section.empty() )
+                {
+                    if( absolute != nullptr )
+                    {
+                        *absolute = section.string();
+                    }
+
+                    if( relative != nullptr )
+                    {
+                        std::filesystem::path basePath = std::filesystem::current_path();
+                        std::filesystem::path rel_path = std::filesystem::relative( section, basePath );
+                        *relative = rel_path.string();
+                    }
+
+                    if( fileName != nullptr )
+                    {
+                        *fileName = section.filename().replace_extension("").string();
+                    }
+                }
             }
 
-            if( absolute != nullptr )
+            // Build declarations
+            if( methodName != nullptr || nameSpace != nullptr || objectName != nullptr )
             {
-                *absolute = section.string();
-            }
+                const asIScriptFunction* function = moduleData.second->GetExceptionFunction();
 
-            if( relative != nullptr )
-            {
-                std::filesystem::path basePath = std::filesystem::current_path();
-                std::filesystem::path rel_path = std::filesystem::relative( section, basePath );
-                *relative = rel_path.string();
+                if( function != nullptr )
+                {
+                    if( methodName != nullptr )
+                    {
+                        if( const char* cstr = function->GetDeclaration(); cstr != nullptr && cstr[0] != '\0' )
+                        {
+                            *methodName = cstr;
+                        }
+                    }
+                    if( nameSpace != nullptr )
+                    {
+                        if( const char* cstr = function->GetNamespace(); cstr != nullptr && cstr[0] != '\0' )
+                        {
+                            *nameSpace = cstr;
+                        }
+                    }
+                    if( objectName != nullptr )
+                    {
+                        if( const char* cstr = function->GetObjectName(); cstr != nullptr && cstr[0] != '\0' )
+                        {
+                            *objectName = cstr;
+                        }
+                    }
+                }
             }
-
-            if( fileName != nullptr )
-            {
-                *fileName = section.filename().string();
-            }
-
-            return true;
         }
-
-        return false;
     }
 
     inline void ThrowScriptException( std::pair<ExceptionModuleData*, asIScriptContext*> context, const CString& message, bool canCatch )
@@ -195,7 +236,7 @@ namespace ASException
         REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
         REGISTER_GLOBAL_FUNCTION( "const int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
         REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message" );
-        REGISTER_GLOBAL_FUNCTION( "bool ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script that raised the last exception." );
+        REGISTER_GLOBAL_FUNCTION( "void ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script that raised the last exception." );
         engine->SetDefaultNamespace( "" );
     }
 }
