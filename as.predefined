@@ -314,6 +314,8 @@ namespace Exception
     void Clear();
     /// Get the current exception count. this value only increases for explicit script-throw exceptions.
     int Id();
+    /// Line of where the exception was raised.
+    int Line();
     /// Get the current exception message.
     string Message();
     /// Get the call stack in string form.

@@ -153,6 +153,17 @@ namespace ASException
         return -1;
     }
 
+    static int Line()
+    {
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            const char* scriptSection = nullptr;
+            int line = moduleDataOpt.value().second->GetExceptionLineNumber( 0, &scriptSection );
+            return line;
+        }
+        return -1;
+    }
+
     static CString CallStack()
     {
         CString str;
@@ -337,6 +348,7 @@ namespace ASException
         REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, dictionary@ additionalData, bool canCatch = true )", asFUNCTION(&::ASException::ThrowDictionary), asCALL_CDECL, "Raises a script exception with aditional metadata dictionary. if canCatch is false the script's catch block won't be called." );
         REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
         REGISTER_GLOBAL_FUNCTION( "int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
+        REGISTER_GLOBAL_FUNCTION( "int Line()", asFUNCTION(ASException::Line), asCALL_CDECL, "Line of where the exception was raised." );
         REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message." );
         REGISTER_GLOBAL_FUNCTION( "string CallStack()", asFUNCTION(ASException::CallStack), asCALL_CDECL, "Get the call stack in string form." );
         REGISTER_GLOBAL_FUNCTION( "void ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script that raised the last exception." );
