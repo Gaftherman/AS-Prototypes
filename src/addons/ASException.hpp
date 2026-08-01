@@ -1,4 +1,5 @@
 #include "addon_registry.h"
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <optional>
@@ -8,6 +9,7 @@ namespace ASException
     // Struct container per module
     struct ExceptionModuleData
     {
+        std::filesystem::path ScriptSection;
         std::string Message;
         int Id = 0;
         CScriptDictionary* dictionaryData = nullptr;
@@ -17,6 +19,9 @@ namespace ASException
     {
         if( context != nullptr )
         {
+            context->ScriptSection.clear();
+            context->Message.clear();
+
             // Clean up dictionary object
             if( CScriptDictionary* dict = context->dictionaryData; dict != nullptr )
             {
@@ -97,6 +102,42 @@ namespace ASException
         return str;
     }
 
+    static CString ScriptSection( bool getFullPath = true )
+    {
+        CString str;
+
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            auto moduleData = moduleDataOpt.value();
+
+            std::filesystem::path& section = moduleData.first->ScriptSection;
+
+            if( section.empty() )
+            {
+                const char* scriptSection = nullptr;
+                moduleData.second->GetExceptionLineNumber( 0, &scriptSection );
+
+                if( scriptSection != nullptr )
+                {
+                    // Format path
+                    moduleData.first->ScriptSection = std::filesystem::path( scriptSection );
+                }
+            }
+
+            if( getFullPath )
+            {
+                str = section.string();
+            }
+            else
+            {
+                std::filesystem::path basePath = std::filesystem::current_path();
+                std::filesystem::path rel_path = std::filesystem::relative( section, basePath );
+                str = rel_path.string();
+            }
+        }
+        return str;
+    }
+
     inline void ThrowScriptException( std::pair<ExceptionModuleData*, asIScriptContext*> context, const CString& message, bool canCatch )
     {
         // Clear previous exception data
@@ -145,6 +186,7 @@ namespace ASException
         REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
         REGISTER_GLOBAL_FUNCTION( "const int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
         REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message" );
+        REGISTER_GLOBAL_FUNCTION( "string ScriptSection( bool getFullPath = true )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script file that raised exception. if getFullPath is true it is an absolute path, else it's relative to the program working directory" );
         engine->SetDefaultNamespace( "" );
     }
 }
