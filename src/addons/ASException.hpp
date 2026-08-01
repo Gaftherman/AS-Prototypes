@@ -165,6 +165,20 @@ namespace ASException
         return str;
     }
 
+    static CScriptDictionary* Dictionary()
+    {
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            if( CScriptDictionary* dict = moduleDataOpt.value().first->dictionaryData; dict != nullptr )
+            {
+                dict->AddRef();
+                return dict;
+            }
+        }
+
+        return nullptr;
+    }
+
     static CString Message()
     {
         CString str;
@@ -322,10 +336,11 @@ namespace ASException
         REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, bool canCatch = true )", asFUNCTION(ASException::Throw), asCALL_CDECL, "Raises a script exception. if canCatch is false the script's catch block won't be called." );
         REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, dictionary@ additionalData, bool canCatch = true )", asFUNCTION(&::ASException::ThrowDictionary), asCALL_CDECL, "Raises a script exception with aditional metadata dictionary. if canCatch is false the script's catch block won't be called." );
         REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
-        REGISTER_GLOBAL_FUNCTION( "const int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
+        REGISTER_GLOBAL_FUNCTION( "int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
         REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message." );
         REGISTER_GLOBAL_FUNCTION( "string CallStack()", asFUNCTION(ASException::CallStack), asCALL_CDECL, "Get the call stack in string form." );
         REGISTER_GLOBAL_FUNCTION( "void ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script that raised the last exception." );
+        REGISTER_GLOBAL_FUNCTION( "dictionary@ Dictionary()", asFUNCTION(ASException::Dictionary), asCALL_CDECL, "Get a handle to the dictionary data if the exception provided one when raised." );
         engine->SetDefaultNamespace( "" );
     }
 }
