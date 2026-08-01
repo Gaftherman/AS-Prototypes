@@ -53,7 +53,7 @@ void main()
     optional<pev> optClass;
     pev entvar( "SomeDude" );
     optClass.set(entvar);
-    Expect( "optional with class handles", true, entvar.targetname == optClass.value().targetname );
+    Expect( "optional with static class", true, entvar.targetname == optClass.value().targetname );
 
     optional<pev@> optClassHandle;
     pev@ entvarHandle = pev( "SomeDude2" );
