@@ -84,6 +84,73 @@ namespace ASException
         return -1;
     }
 
+    static CString CallStack()
+    {
+        CString str;
+
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            auto moduleData = moduleDataOpt.value();
+
+            asIScriptContext* ctx = moduleData.second;
+            asUINT stackSize = ctx->GetCallstackSize();
+
+            std::stringstream stack;
+
+            stack << "Exception: " << ctx->GetExceptionString() << "\n";
+
+            for( asUINT n = 0; n < stackSize; n++ )
+            {
+                const asIScriptFunction* function = ctx->GetFunction(n);
+
+                if( function != nullptr )
+                {
+                    function = ctx->GetFunction(n);
+
+                    if( const char* cstr = function->GetDeclaration(); cstr != nullptr && cstr[0] != '\0' )
+                        stack << "method: " << cstr << "\n";
+
+                    if( function->GetFuncType() == asFUNC_SCRIPT )
+                    {
+                        const char* scriptSection = nullptr;
+
+                        int line = 0;
+                        if( n == 0 )
+                            line = ctx->GetExceptionLineNumber( 0, &scriptSection );
+                        else
+                            line = ctx->GetLineNumber( n, 0, &scriptSection );
+
+                        stack << "at line: " << line << "\n";
+
+                        if( const char* cstr = function->GetNamespace(); cstr != nullptr && cstr[0] != '\0' )
+                            stack << "at namespace: " << cstr << "\n";
+
+                        if( const char* cstr = function->GetObjectName(); cstr != nullptr && cstr[0] != '\0' )
+                            stack << "at class: " << cstr << "\n";
+
+                        if( scriptSection != nullptr )
+                            stack << "at file: " << scriptSection << "\n";
+                    }
+                    else
+                    {
+                        stack << "{...application...}\n";
+                    }
+                }
+                else
+                {
+                    stack << "{...script engine...}\n";
+                }
+
+                if( n < stackSize - 1 )
+                {
+                    stack << "--------------------\n";
+                }
+            }
+            str = stack.str();
+        }
+        return str;
+    }
+
     static CString Message()
     {
         CString str;
@@ -116,8 +183,6 @@ namespace ASException
         CString* objectName
     )
     {
-        CString str;
-
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
             auto moduleData = moduleDataOpt.value();
@@ -244,7 +309,8 @@ namespace ASException
         REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, dictionary@ additionalData, bool canCatch = true )", asFUNCTION(&::ASException::ThrowDictionary), asCALL_CDECL, "Raises a script exception with aditional metadata dictionary. if canCatch is false the script's catch block won't be called." );
         REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
         REGISTER_GLOBAL_FUNCTION( "const int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
-        REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message" );
+        REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message." );
+        REGISTER_GLOBAL_FUNCTION( "string CallStack()", asFUNCTION(ASException::CallStack), asCALL_CDECL, "Get the call stack in string form. the string is not stored but builded on every call." );
         REGISTER_GLOBAL_FUNCTION( "void ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script that raised the last exception." );
         engine->SetDefaultNamespace( "" );
     }
