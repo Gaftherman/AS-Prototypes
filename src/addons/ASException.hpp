@@ -1,129 +1,128 @@
 #include "addon_registry.h"
 #include <iostream>
 #include <sstream>
+#include <optional>
 
-class ASException
+namespace ASException
 {
-    protected:
-        CString message;
-        CString func;
-        CString sect;
-        CString stack;
-        int line;
-        CScriptDictionary* data;
-        int refCount;
+    // Struct container per module
+    struct ExceptionModuleData
+    {
+        int Id = 0;
+        CScriptDictionary* dictionaryData = nullptr;
+    };
 
-    public:
-
-        ASException() : refCount(1) { }
-
-        ~ASException() { }
-
-        void AddRef()
+    static inline void Clear( ExceptionModuleData* context )
+    {
+        if( context != nullptr )
         {
-            refCount++;
-        }
-
-        void Release()
-        {
-            if( --refCount == 0 )
+            // Clean up dictionary object
+            if( CScriptDictionary* dict = context->dictionaryData; dict != nullptr )
             {
-                delete this;
+                context->dictionaryData = nullptr;
+                dict->Release();
             }
         }
+    }
 
-        static void RaiseException( const CString& message, CScriptDictionary* data = nullptr )
+    void CleanUpModuleData( asIScriptModule* ctx )
+    {
+        if( ExceptionModuleData* data = static_cast<ExceptionModuleData*>( ctx->GetUserData(1) ); data != nullptr )
         {
-            asIScriptContext* ctx = asGetActiveContext();
+            Clear( data );
+            delete data;
+        }
+    }
 
-            if( ctx != nullptr )
+    // Initialize one ExceptionModuleData per script and return a pointer to it.
+    std::optional<std::pair<ExceptionModuleData*, asIScriptContext*>> GetModuleData()
+    {
+        if( asIScriptContext* ctx = asGetActiveContext(); ctx != nullptr )
+        {
+            if( asIScriptFunction* func = ctx->GetFunction(); func != nullptr )
             {
-                ctx->SetException( message.c_str(), true );
-
-                if( data != nullptr )
+                if( asIScriptModule* module = func->GetModule(); module != nullptr )
                 {
-                    if( ctx->WillExceptionBeCaught() )
+                    ExceptionModuleData* data = static_cast<ExceptionModuleData*>( module->GetUserData(1) );
+
+                    if( data == nullptr )
                     {
-                        // -TODO Como mantener data valido hasta GetException
+                        if( auto engine = ctx->GetEngine(); engine != nullptr )
+                        {
+                            data = new ExceptionModuleData();
+                            module->SetUserData( data, 1 ); 
+                            engine->SetModuleUserDataCleanupCallback( CleanUpModuleData, 1 );
+                        }
                     }
+                    return { { data, ctx } };
                 }
-
             }
         }
+        return std::nullopt;
+    }
 
-        static ASException* GetException()
+    static void ClearScripted()
+    {
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
-            asIScriptContext* ctx = asGetActiveContext();
+            Clear( moduleDataOpt.value().first );
+        }
+    }
 
-            if( ctx == nullptr )
-                return nullptr;
+    static int Id()
+    {
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+            return moduleDataOpt.value().first->Id;
+        return -1;
+    }
 
-#if 0
-            if( ctx->GetState() != asEXECUTION_EXCEPTION )
+    inline void ThrowScriptException( std::pair<ExceptionModuleData*, asIScriptContext*> context, const CString& message, bool canCatch )
+    {
+        // Clear previous exception data
+        Clear( context.first );
+
+        context.first->Id++;
+        context.second->SetException( message.c_str(), canCatch );
+    }
+
+    static void Throw( const CString& message, bool canCatch = true )
+    {
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            ThrowScriptException( moduleDataOpt.value(), message, canCatch );
+        }
+    }
+
+    static void ThrowDictionary( const CString& message, CScriptDictionary* additionalData, bool canCatch = true )
+    {
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            auto moduleData = moduleDataOpt.value();
+
+            ThrowScriptException( moduleData, message, canCatch );
+
+            if( additionalData != nullptr )
             {
-                ctx->SetException( "null pointer error: Can not call GetException outside of a 'catch' block!", false );
-                return nullptr;
-            }
-#endif
-
-            const char* scriptSection = nullptr;
-            const asIScriptFunction* function = ctx->GetExceptionFunction();
-
-            ASException* exception = new ASException();
-
-            exception->message = ctx->GetExceptionString();
-            exception->line = ctx->GetExceptionLineNumber(0, &scriptSection);
-            exception->sect = scriptSection ? scriptSection : "";
-            exception->func = function ? function->GetDeclaration() : "";
-
-            std::stringstream stack;
-
-            for( asUINT n = 1; n < ctx->GetCallstackSize(); n++ )
-            {
-                function = ctx->GetFunction(n);
-
-                if( function )
+                if( moduleData.second->WillExceptionBeCaught() )
                 {
-                    if( function->GetFuncType() == asFUNC_SCRIPT )
-                    {
-                        int line = ctx->GetLineNumber(n, 0, &scriptSection);
-                        stack << (scriptSection ? scriptSection : "") << " (" << line << "): " << function->GetDeclaration() << "\n";
-                    }
-                    else
-                    {
-                        // The context is being reused by the application for a nested call
-                        stack << "{...application...}: " << function->GetDeclaration() << "\n";
-                    }
+                    moduleData.first->dictionaryData = additionalData;
                 }
                 else
                 {
-                    // The context is being reused by the script engine for a nested call
-                    stack << "{...script engine...}\n";
+                    // Don't add reference if the script won't catch exception.
+                    additionalData->Release();
                 }
             }
-
-            exception->stack = stack.str();
-
-            return exception;
         }
+    }
 
-        static inline void Register( asIScriptEngine* engine )
-        {
-            REGISTER_OBJECT_TYPE( "Exception", 0, asOBJ_REF, "Exception object storing callstack, line number, message, and metadata." );
-            REGISTER_OBJECT_BEHAVIOUR( "Exception", asBEHAVE_ADDREF, "void f()", asMETHOD(ASException, AddRef), asCALL_THISCALL, "Increments reference count of Exception." );
-            REGISTER_OBJECT_BEHAVIOUR( "Exception", asBEHAVE_RELEASE, "void f()", asMETHOD(ASException, Release), asCALL_THISCALL, "Decrements reference count of Exception." );
-
-            REGISTER_OBJECT_PROPERTY( "Exception", "string message", asOFFSET(ASException, message), "Exception error message string." );
-            REGISTER_OBJECT_PROPERTY( "Exception", "string func", asOFFSET(ASException, func), "Function declaration where exception occurred." );
-            REGISTER_OBJECT_PROPERTY( "Exception", "string sect", asOFFSET(ASException, sect), "Script section or file name where exception occurred." );
-            REGISTER_OBJECT_PROPERTY( "Exception", "string stack", asOFFSET(ASException, stack), "Call stack trace at the moment exception occurred." );
-            REGISTER_OBJECT_PROPERTY( "Exception", "int line", asOFFSET(ASException, line), "Script line number where exception occurred." );
-            REGISTER_OBJECT_PROPERTY( "Exception", "dictionary data", asOFFSET(ASException, data), "Additional contextual data dictionary attached to exception." );
-
-            // Raise an exception with additional information stored in data if needed.
-            REGISTER_GLOBAL_FUNCTION( "void SetException( const string&in exception, dictionary@ data = null )", asFUNCTION(ASException::RaiseException), asCALL_CDECL, "Raises a script exception with an optional metadata dictionary." );
-
-            // Get exception
-            REGISTER_GLOBAL_FUNCTION( "Exception@ GetException()", asFUNCTION(ASException::GetException), asCALL_CDECL, "Returns the current active exception object." );
-        }
-};
+    static inline void Register( asIScriptEngine* engine )
+    {
+        engine->SetDefaultNamespace( "Exception" );
+        REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, bool canCatch = true )", asFUNCTION(ASException::Throw), asCALL_CDECL, "Raises a script exception. if canCatch is false the script's catch block won't be called." );
+        REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, dictionary@ additionalData, bool canCatch = true )", asFUNCTION(&::ASException::ThrowDictionary), asCALL_CDECL, "Raises a script exception with aditional metadata dictionary. if canCatch is false the script's catch block won't be called." );
+        REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
+        REGISTER_GLOBAL_FUNCTION( "const int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
+        engine->SetDefaultNamespace( "" );
+    }
+}
