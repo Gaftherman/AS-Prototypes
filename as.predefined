@@ -241,23 +241,15 @@ class JSON
     /// When true, operations raise script exceptions on error; when false, operations fail silently.
     bool strict;
 }
-/// Addon: ASException
-/// Get the current exception count. this value only increases for explicit script-throw exceptions.
 uint scan(const string&in str, ?&out...);
-/// Addon: ASException
-/// Get the path to the script that raised the last exception.
 string format(const string&in fmt, const ?&in...);
 string formatInt(int64 val, const string&in options = "", uint width = 0);
 string formatUInt(uint64 val, const string&in options = "", uint width = 0);
 string formatFloat(double val, const string&in options = "", uint width = 0, uint precision = 0);
 int64 parseInt(const string&in, uint base = 10, uint&out byteCount = 0);
 uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
-/// Addon: ASConsole
-/// Print to the console.
 double parseFloat(const string&in, uint&out byteCount = 0);
 string join(const string[]&in, const string&in);
-/// Addon: ASException
-/// Raises a script exception with aditional metadata dictionary. if canCatch is false the script's catch block won't be called.
 float fpFromIEEE(uint);
 uint fpToIEEE(float);
 double fpFromIEEE(uint64);

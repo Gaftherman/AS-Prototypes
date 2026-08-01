@@ -13,12 +13,14 @@ namespace ASException
         std::string Message;
         int Id = 0;
         CScriptDictionary* dictionaryData = nullptr;
+        bool Cleared = false;
     };
 
     static inline void Clear( ExceptionModuleData* context )
     {
         if( context != nullptr )
         {
+            context->Cleared = true;
             context->ScriptSection.clear();
             context->Message.clear();
 
@@ -90,6 +92,9 @@ namespace ASException
         {
             auto moduleData = moduleDataOpt.value();
 
+            if( moduleData.first->Cleared )
+                return str; // Script called Clear(). do not rebuild.
+
             std::string& msg = moduleData.first->Message;
 
             if( msg.size() == 0 )
@@ -116,6 +121,9 @@ namespace ASException
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
             auto moduleData = moduleDataOpt.value();
+
+            if( moduleData.first->Cleared )
+                return; // Script called Clear(). do not rebuild.
 
             // Build paths
             if( absolute != nullptr || relative != nullptr || fileName != nullptr )
@@ -194,6 +202,7 @@ namespace ASException
         Clear( context.first );
 
         context.first->Id++;
+        context.first->Cleared = false;
         context.second->SetException( message.c_str(), canCatch );
     }
 
