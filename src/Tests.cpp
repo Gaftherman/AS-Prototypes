@@ -22,6 +22,11 @@ namespace Tests
 
     inline bool Expect( const CString& title, bool expected, bool condition )
     {
+        const char* titleCStr = title.c_str();
+
+        if( titleCStr == nullptr )
+            titleCStr = "[Invalid/Null String Data]";
+
         asIScriptContext* ctx = asGetActiveContext();
 
         if( ctx != nullptr && expected == condition )
@@ -29,14 +34,14 @@ namespace Tests
             ASConsole::SetColor( ASConsole::Color::ForeGround, 60, 255, 60 );
             ASConsole::Write( "Passed" );
             ASConsole::ResetColor();
-            std::cout << " test \"" << title.c_str() << "\"" << "\n";
+            std::cout << " test \"" << titleCStr << "\"" << "\n";
             Tests::Passes++;
             return true;
         }
         ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
         ASConsole::Write( "Failed" );
         ASConsole::ResetColor();
-        std::cerr << " test \"" << title.c_str() << "\"" << "\n";
+        std::cerr << " test \"" << titleCStr << "\"" << "\n";
         Tests::Fails++;
         return false;
     }
