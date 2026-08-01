@@ -17,6 +17,9 @@ namespace fs = std::filesystem;
 
 namespace Tests
 {
+    inline int TotalFails = 0;
+    inline int TotalPasses = 0;
+
     inline int Fails = 0;
     inline int Passes = 0;
 
@@ -59,6 +62,115 @@ namespace Tests
         return true;
     }
 }
+#include <mutex>
+
+struct CustomConsoleReporter : public doctest::IReporter
+{
+    const doctest::ContextOptions& opt;
+    const doctest::TestCaseData* current_test_case = nullptr;
+    std::mutex mutex;
+    CustomConsoleReporter(const doctest::ContextOptions& in) : opt(in) {}
+    static int get_num_active_contexts() { return 0; }
+    void report_query(const doctest::QueryData&) override {}
+    void test_run_start() override {}
+    void test_case_start(const doctest::TestCaseData& in) override { current_test_case = &in; }
+    void test_case_reenter(const doctest::TestCaseData&) override {}
+    void subcase_end() override {}
+    void log_message(const doctest::MessageData&) override {}
+    void test_case_exception(const doctest::TestCaseException&) override {}
+    void test_case_skipped(const doctest::TestCaseData&) override {}
+    void test_case_end(const doctest::CurrentTestCaseStats& stats) override {
+        if(stats.failure_flags & doctest::TestCaseFailureReason::Crash) {
+            std::cerr << "¡Unexpected crash!\n";
+        }
+    }
+    void log_assert(const doctest::AssertData& in) override {
+        if(!in.m_failed) return;
+        std::lock_guard<std::mutex> lock(mutex);
+        std::cerr << " Error: " << in.m_expr << " líne " << in.m_line << "\n";
+    }
+    void subcase_start(const doctest::SubcaseSignature& in) override
+    {
+        ASConsole::SetColor( ASConsole::Color::BackGround, 50, 50, 50 );
+        ASConsole::SetColor( ASConsole::Color::ForeGround, 200, 200, 50 );
+
+        std::string lines = "================================";
+        for( size_t i = 0; i < in.m_name.size(); i++ )
+            lines += "=";
+
+        ASConsole::WriteLine( lines );
+        ASConsole::Write( "> Running Script AngelScript: " );
+        ASConsole::Write( in.m_name.c_str() );
+        ASConsole::WriteLine( " <" );
+        ASConsole::WriteLine( lines );
+        ASConsole::ResetColor();
+    }
+    void test_run_end(const doctest::TestRunStats& stats) override
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        #define _reset() \
+            ASConsole::SetColor( ASConsole::Color::BackGround, 50, 50, 50 ); \
+            ASConsole::SetColor( ASConsole::Color::ForeGround, 200, 200, 50 )
+        #define _cover( text, r, g, b ) \
+            ASConsole::SetColor( ASConsole::Color::ForeGround, r, g, b ); \
+            std::cout << text; \
+            _reset()
+
+        _reset();
+
+        ASConsole::WriteLine( "===============================================================================" );
+
+        if( Tests::TotalFails > 0 )
+        {
+            std::cout << "> ";
+            _cover( "Failed", 255, 50, 50 );
+            std::cout << ": ";
+            _cover( Tests::TotalFails, 255, 50, 50 );
+            ASConsole::WriteLine( " tests" );
+        }
+
+        if( Tests::TotalPasses > 0 )
+        {
+            std::cout << "> ";
+            _cover( "Passed", 50, 255, 50 );
+            std::cout << ": ";
+            _cover( Tests::TotalPasses, 50, 255, 50 );
+            ASConsole::WriteLine( " tests" );
+        }
+
+        if( stats.numTestCasesFailed > 0 )
+        {
+            std::cout << "> ";
+            _cover( "Failed", 255, 50, 50 );
+            std::cout << ": ";
+            _cover( stats.numTestCasesFailed, 255, 50, 50 );
+            ASConsole::WriteLine( " asserts" );
+        }
+
+        if( ( stats.numAsserts - stats.numAssertsFailed ) > 0 )
+        {
+            std::cout << "> ";
+            _cover( "Passed", 50, 255, 50 );
+            std::cout << ": ";
+            _cover( ( stats.numAsserts - stats.numAssertsFailed ), 50, 255, 50 );
+            std::cout << " asserts";
+
+            if( stats.numAsserts != ( stats.numAsserts - stats.numAssertsFailed ) )
+            {
+                std::cout << "out of ";
+                _cover( stats.numAsserts, 50, 255, 50 );
+            }
+
+            ASConsole::WriteLineEmpty();
+        }
+
+        ASConsole::WriteLine( "===============================================================================" );
+        ASConsole::ResetColor();
+    }
+};
+
+REGISTER_REPORTER("custom_console", 0, CustomConsoleReporter);
 
 extern void MessageCallback( const asSMessageInfo*, void* );
 extern int ExecuteSingleScript( asIScriptEngine*, const std::string&, const std::vector<std::string>& );
@@ -140,7 +252,6 @@ TEST_CASE( "AngelScript Test Directory Runner" )
 
             SUBCASE( filePathString.c_str() )
             {
-                std::cout << "[TEST] Running script: " << filePathString << "\n";
                 int result = ExecuteSingleScript( engine, filePathString, {} );
                 CHECK( result == 0 );
                 if( result != 0 )
@@ -174,10 +285,15 @@ TEST_CASE( "AngelScript Test Directory Runner" )
         ASConsole::ResetColor();
     }
 
+    Tests::TotalFails += Tests::Fails;
+    Tests::Fails = 0;
+    Tests::TotalPasses += Tests::Passes;
+    Tests::Passes = 0;
+
     GenerateScriptPredefined(engine, "../../as.predefined");
 
     engine->ShutDownAndRelease();
 
-    CHECK( Tests::Fails == 0 );
+    CHECK( Tests::TotalFails == 0 );
 }
 #endif

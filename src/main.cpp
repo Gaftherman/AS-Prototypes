@@ -127,6 +127,7 @@ int main(int argc, char **argv) {
         if( arg == "--test" )
         {
             doctest::Context context;
+            context.addFilter("reporters", "custom_console");
             return context.run();
         }
 #endif
