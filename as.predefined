@@ -316,8 +316,8 @@ namespace Exception
     const int Id();
     /// Get the current exception message
     string Message();
-    /// Get the path to the script file that raised exception. if getFullPath is true it is an absolute path, else it's relative to the program working directory
-    string ScriptSection(bool getFullPath = true);
+    /// Get the path to the script that raised the last exception.
+    bool ScriptSection(string&out absolute = void, string&out relative = void, string&out fileName = void);
 }
 /// Addon: Tests
 namespace Tests

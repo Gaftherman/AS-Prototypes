@@ -102,7 +102,7 @@ namespace ASException
         return str;
     }
 
-    static CString ScriptSection( bool getFullPath = true )
+    static bool ScriptSection( CString* absolute, CString* relative, CString* fileName )
     {
         CString str;
 
@@ -117,25 +117,34 @@ namespace ASException
                 const char* scriptSection = nullptr;
                 moduleData.second->GetExceptionLineNumber( 0, &scriptSection );
 
-                if( scriptSection != nullptr )
-                {
-                    // Format path
-                    moduleData.first->ScriptSection = std::filesystem::path( scriptSection );
-                }
+                if( !scriptSection )
+                    return false;
+
+                // Format path
+                moduleData.first->ScriptSection = std::filesystem::path( scriptSection );
             }
 
-            if( getFullPath )
+            if( absolute != nullptr )
             {
-                str = section.string();
+                *absolute = section.string();
             }
-            else
+
+            if( relative != nullptr )
             {
                 std::filesystem::path basePath = std::filesystem::current_path();
                 std::filesystem::path rel_path = std::filesystem::relative( section, basePath );
-                str = rel_path.string();
+                *relative = rel_path.string();
             }
+
+            if( fileName != nullptr )
+            {
+                *fileName = section.filename().string();
+            }
+
+            return true;
         }
-        return str;
+
+        return false;
     }
 
     inline void ThrowScriptException( std::pair<ExceptionModuleData*, asIScriptContext*> context, const CString& message, bool canCatch )
@@ -186,7 +195,7 @@ namespace ASException
         REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
         REGISTER_GLOBAL_FUNCTION( "const int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
         REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message" );
-        REGISTER_GLOBAL_FUNCTION( "string ScriptSection( bool getFullPath = true )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script file that raised exception. if getFullPath is true it is an absolute path, else it's relative to the program working directory" );
+        REGISTER_GLOBAL_FUNCTION( "bool ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script that raised the last exception." );
         engine->SetDefaultNamespace( "" );
     }
 }
