@@ -1,6 +1,9 @@
 #pragma once
 #include "addon_registry.h"
 
+// Whatever to register a std::nullopt-like object.
+#define ASOPTIONAL_ADD_NULLOPT 0
+
 class ASOptional
 {
     private:
@@ -20,6 +23,22 @@ class ASOptional
             }
             return subType;
         }
+
+#if ASOPTIONAL_ADD_NULLOPT
+        class ASNullOptional
+        {
+        public:
+            int refCount = 1;
+
+            void AddRef() { refCount++; }
+
+            void Release()
+            {
+                if (--refCount == 0)
+                    delete this;
+            }
+        };
+#endif
 
     public:
         ASOptional( asITypeInfo* tinfo ) : typeInfo(tinfo), valueBuffer(nullptr), refCount(1)
@@ -165,6 +184,13 @@ class ASOptional
             }
         }
 
+#if ASOPTIONAL_ADD_NULLOPT
+        static ASOptional* FactoryNullOptional( asITypeInfo* typeInfo, ASNullOptional* )
+        {
+            return new ASOptional(typeInfo);
+        }
+#endif
+
         static ASOptional* Factory( asITypeInfo* typeInfo )
         {
             return new ASOptional( typeInfo );
@@ -270,6 +296,23 @@ class ASOptional
 
             REGISTER_OBJECT_METHOD( "optional<T>", "optional<T>& opAssign(const T &in value)",
                 asFUNCTION(ASOptional::AssignValueWrapper), asCALL_CDECL_OBJFIRST, "Assigns a new value to the optional container." );
+
+#if ASOPTIONAL_ADD_NULLOPT
+            REGISTER_OBJECT_TYPE( "nullopt_t", 0, asOBJ_REF, "" );
+
+            REGISTER_OBJECT_BEHAVIOUR("nullopt_t", asBEHAVE_ADDREF, "void f()",
+                asMETHOD(ASNullOptional, AddRef), asCALL_THISCALL, "" );
+
+            REGISTER_OBJECT_BEHAVIOUR("nullopt_t", asBEHAVE_RELEASE, "void f()",
+                asMETHOD(ASNullOptional, Release), asCALL_THISCALL, "" );
+
+            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const nullopt_t@ value)",
+                asFUNCTION((ASOptional*(*)(asITypeInfo*, ASNullOptional*))ASOptional::FactoryNullOptional), asCALL_CDECL, "Constructs a empty optional." );
+
+            static ASNullOptional* g_nullopt = new ASNullOptional();
+
+            REGISTER_GLOBAL_PROPERTY( "const nullopt_t@ nullopt", &g_nullopt, "" );
+#endif
         }
 
 };

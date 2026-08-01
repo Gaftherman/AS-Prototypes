@@ -12,9 +12,15 @@ class pev
     }
 }
 
+#if ASOPTIONAL_ADD_NULLOPT
+optional<double> MethodReturnNullOpt() { return nullopt; }
+#endif
 optional<int> MethodReturnOptionalEmpty() { return {}; }
 optional<int> MethodReturnOptionalValid() { return {1}; }
 optional<int> MethodReturnOptionalInvalid() { return {1,2}; }
+void MethodOptionalImplicitConstruct( optional<int> iOpt ) {
+    Expect("method with optional argument", true, iOpt.has_value() && iOpt.value() == 1 );
+}
 
 void main()
 {
@@ -56,4 +62,12 @@ void main()
     catch {
         Expect( "method return invalid optional {1,2}", true, true );
     }
+
+    MethodOptionalImplicitConstruct(1);
+
+#if ASOPTIONAL_ADD_NULLOPT
+    optional<string> optFromNull(nullopt);
+    Expect( "optional construct with nullopt", true, !optFromNull.has_value() );
+    Expect( "optional return with nullopt", true, !MethodReturnNullOpt().has_value() );
+#endif
 }
