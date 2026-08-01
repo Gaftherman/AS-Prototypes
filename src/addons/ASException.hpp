@@ -75,7 +75,7 @@ namespace ASException
         return std::nullopt;
     }
 
-    void ExceptionCallback( asIScriptContext* ctx, void* userData )
+    void ExceptionCallback( asIScriptContext* ctx, void* )
     {
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
