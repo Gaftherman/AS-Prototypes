@@ -14,6 +14,7 @@ namespace ASException
         int Id = 0;
         CScriptDictionary* dictionaryData = nullptr;
         bool Cleared = false;
+        std::string callStack;
     };
 
     static inline void Clear( ExceptionModuleData* context )
@@ -23,6 +24,7 @@ namespace ASException
             context->Cleared = true;
             context->ScriptSection.clear();
             context->Message.clear();
+            context->callStack.clear();
 
             // Clean up dictionary object
             if( CScriptDictionary* dict = context->dictionaryData; dict != nullptr )
@@ -60,6 +62,10 @@ namespace ASException
                             data = new ExceptionModuleData();
                             module->SetUserData( data, 1 ); 
                             engine->SetModuleUserDataCleanupCallback( CleanUpModuleData, 1 );
+
+                            // Exception call stack callback
+                            extern void ExceptionCallback( asIScriptContext*, void* );
+                            ctx->SetExceptionCallback( asFUNCTION(ExceptionCallback), nullptr, asCALL_CDECL );
                         }
                     }
                     return { { data, ctx } };
@@ -69,30 +75,12 @@ namespace ASException
         return std::nullopt;
     }
 
-    static void ClearScripted()
+    void ExceptionCallback( asIScriptContext* ctx, void* userData )
     {
-        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
-        {
-            Clear( moduleDataOpt.value().first );
-        }
-    }
-
-    static int Id()
-    {
-        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
-            return moduleDataOpt.value().first->Id;
-        return -1;
-    }
-
-    static CString CallStack()
-    {
-        CString str;
-
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
             auto moduleData = moduleDataOpt.value();
 
-            asIScriptContext* ctx = moduleData.second;
             asUINT stackSize = ctx->GetCallstackSize();
 
             std::stringstream stack;
@@ -146,8 +134,34 @@ namespace ASException
                     stack << "--------------------\n";
                 }
             }
-            str = stack.str();
+            moduleData.first->callStack = stack.str();
         }
+    }
+
+    static void ClearScripted()
+    {
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            Clear( moduleDataOpt.value().first );
+        }
+    }
+
+    static int Id()
+    {
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+            return moduleDataOpt.value().first->Id;
+        return -1;
+    }
+
+    static CString CallStack()
+    {
+        CString str;
+
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            str = moduleDataOpt.value().first->callStack.c_str();
+        }
+
         return str;
     }
 
@@ -310,7 +324,7 @@ namespace ASException
         REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
         REGISTER_GLOBAL_FUNCTION( "const int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
         REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message." );
-        REGISTER_GLOBAL_FUNCTION( "string CallStack()", asFUNCTION(ASException::CallStack), asCALL_CDECL, "Get the call stack in string form. the string is not stored but builded on every call." );
+        REGISTER_GLOBAL_FUNCTION( "string CallStack()", asFUNCTION(ASException::CallStack), asCALL_CDECL, "Get the call stack in string form." );
         REGISTER_GLOBAL_FUNCTION( "void ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script that raised the last exception." );
         engine->SetDefaultNamespace( "" );
     }
