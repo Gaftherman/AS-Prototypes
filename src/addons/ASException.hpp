@@ -8,6 +8,7 @@ namespace ASException
     // Struct container per module
     struct ExceptionModuleData
     {
+        std::string Message;
         int Id = 0;
         CScriptDictionary* dictionaryData = nullptr;
     };
@@ -76,6 +77,26 @@ namespace ASException
         return -1;
     }
 
+    static CString Message()
+    {
+        CString str;
+
+        if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
+        {
+            auto moduleData = moduleDataOpt.value();
+
+            std::string& msg = moduleData.first->Message;
+
+            if( msg.size() == 0 )
+            {
+                moduleData.first->Message = moduleData.second->GetExceptionString();
+            }
+
+            str = msg;
+        }
+        return str;
+    }
+
     inline void ThrowScriptException( std::pair<ExceptionModuleData*, asIScriptContext*> context, const CString& message, bool canCatch )
     {
         // Clear previous exception data
@@ -123,6 +144,7 @@ namespace ASException
         REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, dictionary@ additionalData, bool canCatch = true )", asFUNCTION(&::ASException::ThrowDictionary), asCALL_CDECL, "Raises a script exception with aditional metadata dictionary. if canCatch is false the script's catch block won't be called." );
         REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
         REGISTER_GLOBAL_FUNCTION( "const int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
+        REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message" );
         engine->SetDefaultNamespace( "" );
     }
 }
