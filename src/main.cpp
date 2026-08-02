@@ -13,7 +13,7 @@
 
 #include "addon_registry.h"
 
-#include "addons/ASConsole.hpp"
+#include "addons/Console.hpp"
 
 // Callback for AngelScript compiler messages and warnings
 void MessageCallback(const asSMessageInfo *msg, void *param) {
@@ -91,7 +91,7 @@ int ExecuteSingleScript(asIScriptEngine* engine, const std::string& scriptPath, 
 
     r = ctx->Execute();
 
-    ASConsole::ResetColor(); // Reset colors if a module has set them -TODO maybe use AS module shutdown callbacks
+    Console::ResetColor(); // Reset colors if a module has set them -TODO maybe use AS module shutdown callbacks
 
     int exitCode = 0;
     if (r == asEXECUTION_FINISHED) {
@@ -129,10 +129,10 @@ int main(int argc, char **argv) {
         {
             std::filesystem::current_path( "Tests/" );
             std::cout << "Set working directory to ";
-            ASConsole::InitWindows();
-            ASConsole::SetColor( ASConsole::Color::ForeGround, 0, 255, 0 );
+            Console::InitWindows();
+            Console::SetColor( Console::Color::ForeGround, 0, 255, 0 );
             std::cout << std::filesystem::current_path();
-            ASConsole::ResetColor();
+            Console::ResetColor();
             std::cout << std::endl;
             doctest::Context context;
             context.addFilter("reporters", "custom_console");

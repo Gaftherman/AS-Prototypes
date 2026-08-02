@@ -7,7 +7,7 @@
 #include <windows.h>
 #endif
 
-namespace ASConsole
+namespace Console
 {
     enum Color
     {
@@ -83,20 +83,20 @@ namespace ASConsole
 
         engine->SetDefaultNamespace( "Console" );
 
-        REGISTER_GLOBAL_FUNCTION( "void Write( const string&in msg )", asFUNCTION(ASConsole::Write), asCALL_CDECL, "Print to the console." );
-        REGISTER_GLOBAL_FUNCTION( "void WriteLine( const string&in msg )", asFUNCTION(ASConsole::WriteLine), asCALL_CDECL, "Print line to the console." );
-        REGISTER_GLOBAL_FUNCTION( "void WriteLine()", asFUNCTION(ASConsole::WriteLineEmpty), asCALL_CDECL, "Print line to the console." );
+        REGISTER_GLOBAL_FUNCTION( "void Write( const string&in msg )", asFUNCTION(Console::Write), asCALL_CDECL, "Print to the console." );
+        REGISTER_GLOBAL_FUNCTION( "void WriteLine( const string&in msg )", asFUNCTION(Console::WriteLine), asCALL_CDECL, "Print line to the console." );
+        REGISTER_GLOBAL_FUNCTION( "void WriteLine()", asFUNCTION(Console::WriteLineEmpty), asCALL_CDECL, "Print line to the console." );
 
         REGISTER_ENUM( "Color", "Console color." );
-        REGISTER_ENUM_VALUE( "Color", "ForeGround", static_cast<int>(ASConsole::Color::ForeGround), "Console text color." );
-        REGISTER_ENUM_VALUE( "Color", "BackGround", static_cast<int>(ASConsole::Color::BackGround), "Console background color." );
-        REGISTER_ENUM_VALUE( "Color", "Both", static_cast<int>(ASConsole::Color::Both), "Both console text and background colors." );
+        REGISTER_ENUM_VALUE( "Color", "ForeGround", static_cast<int>(Console::Color::ForeGround), "Console text color." );
+        REGISTER_ENUM_VALUE( "Color", "BackGround", static_cast<int>(Console::Color::BackGround), "Console background color." );
+        REGISTER_ENUM_VALUE( "Color", "Both", static_cast<int>(Console::Color::Both), "Both console text and background colors." );
 
-        REGISTER_GLOBAL_PROPERTY( "string ForegroundColor", &ASConsole::ForegroundColor, "Represents the text color in the console output." );
-        REGISTER_GLOBAL_PROPERTY( "string BackgroundColor", &ASConsole::BackgroundColor, "Represents the background color in the console output." );
+        REGISTER_GLOBAL_PROPERTY( "string ForegroundColor", &Console::ForegroundColor, "Represents the text color in the console output." );
+        REGISTER_GLOBAL_PROPERTY( "string BackgroundColor", &Console::BackgroundColor, "Represents the background color in the console output." );
 
-        REGISTER_GLOBAL_FUNCTION( "void SetColor( Color target, int red, int green, int blue )", asFUNCTION(ASConsole::SetColor), asCALL_CDECL, "Set the console color code based on the given RGB values." );
-        REGISTER_GLOBAL_FUNCTION( "void ResetColor( Color target = Color::Both )", asFUNCTION(ASConsole::ResetColor), asCALL_CDECL, "Reset the console color code." );
+        REGISTER_GLOBAL_FUNCTION( "void SetColor( Color target, int red, int green, int blue )", asFUNCTION(Console::SetColor), asCALL_CDECL, "Set the console color code based on the given RGB values." );
+        REGISTER_GLOBAL_FUNCTION( "void ResetColor( Color target = Color::Both )", asFUNCTION(Console::ResetColor), asCALL_CDECL, "Reset the console color code." );
 
         engine->SetDefaultNamespace( "" );
     }

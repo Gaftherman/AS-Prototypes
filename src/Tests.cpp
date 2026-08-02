@@ -11,7 +11,7 @@
 #include "addon_registry.h"
 #include "as_predefined.h"
 
-#include "addons/ASConsole.hpp"
+#include "addons/Console.hpp"
 
 namespace fs = std::filesystem;
 
@@ -34,16 +34,16 @@ namespace Tests
 
         if( ctx != nullptr && expected == condition )
         {
-            ASConsole::SetColor( ASConsole::Color::ForeGround, 60, 255, 60 );
-            ASConsole::Write( "Passed" );
-            ASConsole::ResetColor();
+            Console::SetColor( Console::Color::ForeGround, 60, 255, 60 );
+            Console::Write( "Passed" );
+            Console::ResetColor();
             std::cout << " test \"" << titleCStr << "\"" << "\n";
             Tests::Passes++;
             return true;
         }
-        ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
-        ASConsole::Write( "Failed" );
-        ASConsole::ResetColor();
+        Console::SetColor( Console::Color::ForeGround, 255, 60, 60 );
+        Console::Write( "Failed" );
+        Console::ResetColor();
         std::cerr << " test \"" << titleCStr << "\"" << "\n";
         Tests::Fails++;
         return false;
@@ -91,35 +91,35 @@ struct CustomConsoleReporter : public doctest::IReporter
     }
     void subcase_start(const doctest::SubcaseSignature& in) override
     {
-        ASConsole::SetColor( ASConsole::Color::BackGround, 50, 50, 50 );
-        ASConsole::SetColor( ASConsole::Color::ForeGround, 200, 200, 50 );
+        Console::SetColor( Console::Color::BackGround, 50, 50, 50 );
+        Console::SetColor( Console::Color::ForeGround, 200, 200, 50 );
 
         std::string lines = "================================";
         for( size_t i = 0; i < in.m_name.size(); i++ )
             lines += "=";
 
-        ASConsole::WriteLine( lines );
-        ASConsole::Write( "> Running Script AngelScript: " );
-        ASConsole::Write( in.m_name.c_str() );
-        ASConsole::WriteLine( " <" );
-        ASConsole::WriteLine( lines );
-        ASConsole::ResetColor();
+        Console::WriteLine( lines );
+        Console::Write( "> Running Script AngelScript: " );
+        Console::Write( in.m_name.c_str() );
+        Console::WriteLine( " <" );
+        Console::WriteLine( lines );
+        Console::ResetColor();
     }
     void test_run_end(const doctest::TestRunStats& stats) override
     {
         std::lock_guard<std::mutex> lock(mutex);
 
         #define _reset() \
-            ASConsole::SetColor( ASConsole::Color::BackGround, 50, 50, 50 ); \
-            ASConsole::SetColor( ASConsole::Color::ForeGround, 200, 200, 50 )
+            Console::SetColor( Console::Color::BackGround, 50, 50, 50 ); \
+            Console::SetColor( Console::Color::ForeGround, 200, 200, 50 )
         #define _cover( text, r, g, b ) \
-            ASConsole::SetColor( ASConsole::Color::ForeGround, r, g, b ); \
+            Console::SetColor( Console::Color::ForeGround, r, g, b ); \
             std::cout << text; \
             _reset()
 
         _reset();
 
-        ASConsole::WriteLine( "===============================================================================" );
+        Console::WriteLine( "===============================================================================" );
 
         if( Tests::TotalFails > 0 )
         {
@@ -127,7 +127,7 @@ struct CustomConsoleReporter : public doctest::IReporter
             _cover( "Failed", 255, 50, 50 );
             std::cout << ": ";
             _cover( Tests::TotalFails, 255, 50, 50 );
-            ASConsole::WriteLine( " tests" );
+            Console::WriteLine( " tests" );
         }
 
         if( Tests::TotalPasses > 0 )
@@ -136,7 +136,7 @@ struct CustomConsoleReporter : public doctest::IReporter
             _cover( "Passed", 50, 255, 50 );
             std::cout << ": ";
             _cover( Tests::TotalPasses, 50, 255, 50 );
-            ASConsole::WriteLine( " tests" );
+            Console::WriteLine( " tests" );
         }
 
         if( stats.numTestCasesFailed > 0 )
@@ -145,7 +145,7 @@ struct CustomConsoleReporter : public doctest::IReporter
             _cover( "Failed", 255, 50, 50 );
             std::cout << ": ";
             _cover( stats.numTestCasesFailed, 255, 50, 50 );
-            ASConsole::WriteLine( " asserts" );
+            Console::WriteLine( " asserts" );
         }
 
         if( ( stats.numAsserts - stats.numAssertsFailed ) > 0 )
@@ -162,11 +162,11 @@ struct CustomConsoleReporter : public doctest::IReporter
                 _cover( stats.numAsserts, 50, 255, 50 );
             }
 
-            ASConsole::WriteLineEmpty();
+            Console::WriteLineEmpty();
         }
 
-        ASConsole::WriteLine( "===============================================================================" );
-        ASConsole::ResetColor();
+        Console::WriteLine( "===============================================================================" );
+        Console::ResetColor();
     }
 };
 
@@ -241,31 +241,31 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     }
     else
     {
-        ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
-        ASConsole::Write( "No test scripts found in \"" );
-        ASConsole::Write( fs::current_path().string() );
-        ASConsole::WriteLine( "\"" );
+        Console::SetColor( Console::Color::ForeGround, 255, 60, 60 );
+        Console::Write( "No test scripts found in \"" );
+        Console::Write( fs::current_path().string() );
+        Console::WriteLine( "\"" );
         Tests::TotalFails++;
-        ASConsole::ResetColor();
+        Console::ResetColor();
     }
 
-    ASConsole::SetColor( ASConsole::Color::BackGround, 100, 100, 255 );
-    ASConsole::Write( ">" );
-    ASConsole::ResetColor();
+    Console::SetColor( Console::Color::BackGround, 100, 100, 255 );
+    Console::Write( ">" );
+    Console::ResetColor();
 
     if( Tests::Fails > 0 )
     {
-        ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
+        Console::SetColor( Console::Color::ForeGround, 255, 60, 60 );
         std::cerr << " " << Tests::Fails << " tests failed out of " << (Tests::Fails + Tests::Passes);
-        ASConsole::WriteLineEmpty();
-        ASConsole::ResetColor();
+        Console::WriteLineEmpty();
+        Console::ResetColor();
     }
     else if( Tests::Passes > 0 )
     {
-        ASConsole::SetColor( ASConsole::Color::ForeGround, 60, 255, 60 );
+        Console::SetColor( Console::Color::ForeGround, 60, 255, 60 );
         std::cout << " " << Tests::Passes << " tests passed";
-        ASConsole::WriteLineEmpty();
-        ASConsole::ResetColor();
+        Console::WriteLineEmpty();
+        Console::ResetColor();
     }
 
     Tests::TotalFails += Tests::Fails;

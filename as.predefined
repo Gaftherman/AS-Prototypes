@@ -273,7 +273,7 @@ float abs(float);
 float floor(float);
 float fraction(float);
 bool Dispose(?&in);
-/// Addon: ASConsole
+/// Addon: Console
 namespace Console
 {
     /// Console color.
