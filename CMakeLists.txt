@@ -46,6 +46,9 @@ set(ANGELSCRIPT_ADDON_SOURCES
     ${ANGELSCRIPT_ADDON_DIR}/scripthandle/scripthandle.cpp
     ${ANGELSCRIPT_ADDON_DIR}/scripthelper/scripthelper.cpp
     ${ANGELSCRIPT_ADDON_DIR}/datetime/datetime.cpp
+
+    # Our addons
+    src/addons/ASOptional.cpp
 )
 
 # Application sources

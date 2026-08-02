@@ -18,9 +18,14 @@ void MethodArgumentNullOptionalEmpty( optional<int> iOpt = nullopt ) {
     Expect("method with optional argument set to empty", true, iOpt.has_value() && iOpt.value() == 1 );
 }
 #endif
+
 optional<int> MethodReturnOptionalEmpty() { return {}; }
 optional<int> MethodReturnOptionalValid() { return {1}; }
 optional<int> MethodReturnOptionalInvalid() { return {1,2}; }
+#if FALSE
+// This actually crashes the program.
+optional<array<int>> MethodReturnOptionalDoubleInitializerList() { return {{1}}; }
+#endif
 void MethodOptionalImplicitConstruct( optional<int> iOpt ) {
     Expect("method with optional argument", true, iOpt.has_value() && iOpt.value() == 1 );
 }
@@ -73,6 +78,10 @@ void main()
         Expect( "method return invalid optional {1,2}", true, true );
     }
 
+#if FALSE
+    auto optArr = MethodReturnOptionalDoubleInitializerList();
+    Expect( "method return array initializer list in optional initializer list", true, optArr.has_value() && optArr.value()[0] == 1 );
+#endif
     MethodOptionalImplicitConstruct(1);
 
 #if FALSE

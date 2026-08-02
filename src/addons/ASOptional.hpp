@@ -1,318 +1,299 @@
 #pragma once
-#include "addon_registry.h"
+
+#include <angelscript.h>
+
+#include <memory>
 
 // Whatever to register a std::nullopt-like object.
 #define ASOPTIONAL_ADD_NULLOPT 0
 
+// See ASOptional.cpp for registration
 class ASOptional
 {
-    private:
-        asITypeInfo* typeInfo;
-        int subTypeId;
-        int subTypeSize;
-        bool hasValue = false;
-        void* valueBuffer;
-        int refCount;
+private:
+    asITypeInfo* typeInfo;
+    int subTypeId;
+    int subTypeSize;
+    bool hasValue = false;
+    void* valueBuffer;
+    int refCount;
 
-        asITypeInfo* GetSubTypeInfo() const
+    asITypeInfo* GetSubTypeInfo() const
+    {
+        asITypeInfo* subType = typeInfo->GetSubType();
+        if( !subType )
         {
-            asITypeInfo* subType = typeInfo->GetSubType();
-            if( !subType )
-            {
-                subType = typeInfo->GetEngine()->GetTypeInfoById(subTypeId);
-            }
-            return subType;
+            subType = typeInfo->GetEngine()->GetTypeInfoById(subTypeId);
         }
+        return subType;
+    }
 
 #if ASOPTIONAL_ADD_NULLOPT
-        class ASNullOptional
-        {
-        public:
-            int refCount = 1;
-
-            void AddRef() { refCount++; }
-
-            void Release()
-            {
-                if (--refCount == 0)
-                    delete this;
-            }
-        };
-#endif
-
+    class ASNullOptional
+    {
     public:
-        ASOptional( asITypeInfo* tinfo ) : typeInfo(tinfo), valueBuffer(nullptr), refCount(1)
-        {
-            typeInfo->AddRef();
-            subTypeId = typeInfo->GetSubTypeId();
-            subTypeSize = typeInfo->GetEngine()->GetSizeOfPrimitiveType(subTypeId);
-            
-            if( subTypeSize == 0 )
-            {
-                asITypeInfo* subType = GetSubTypeInfo();
-                if( subType ) subTypeSize = subType->GetSize();
-            }
-        }
+        int refCount = 1;
 
-        ~ASOptional()
-        {
-            Clear();
-            typeInfo->Release();
-        }
-
-        void AddRef()
-        {
-            refCount++;
-        }
+        void AddRef() { refCount++; }
 
         void Release()
         {
-            if( --refCount == 0 )
-            {
+            if (--refCount == 0)
                 delete this;
-            }
         }
+    };
+#endif
 
-        bool HasValue() const
+public:
+    ASOptional( asITypeInfo* tinfo ) : typeInfo(tinfo), valueBuffer(nullptr), refCount(1)
+    {
+        typeInfo->AddRef();
+        subTypeId = typeInfo->GetSubTypeId();
+        subTypeSize = typeInfo->GetEngine()->GetSizeOfPrimitiveType(subTypeId);
+        
+        if( subTypeSize == 0 )
         {
-            return hasValue;
-        }
-
-        void Clear()
-        {
-            if( !hasValue )
-                return;
-
             asITypeInfo* subType = GetSubTypeInfo();
-
-            if( valueBuffer )
-            {
-                if( subTypeId & asTYPEID_OBJHANDLE )
-                {
-                    void* obj = *(void**)valueBuffer;
-                    if( obj && subType )
-                        typeInfo->GetEngine()->ReleaseScriptObject(obj, subType);
-                    operator delete(valueBuffer);
-                }
-                else if( subType && (subType->GetFlags() & asOBJ_REF) )
-                {
-                    typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, subType);
-                }
-                else if( subTypeId & asTYPEID_MASK_OBJECT )
-                {
-                    if( subType )
-                        typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, subType);
-                }
-                else
-                {
-                    operator delete(valueBuffer);
-                }
-            }
-
-            valueBuffer = nullptr;
-            hasValue = false;
+            if( subType ) subTypeSize = subType->GetSize();
         }
+    }
 
-        void Set( void* ref )
+    ~ASOptional()
+    {
+        Clear();
+        typeInfo->Release();
+    }
+
+    void AddRef()
+    {
+        refCount++;
+    }
+
+    void Release()
+    {
+        if( --refCount == 0 )
         {
-            Clear();
-
-            if( !ref )
-                return;
-
-            hasValue = true;
-            asITypeInfo* subType = GetSubTypeInfo();
-
-            if( subTypeId & asTYPEID_OBJHANDLE )
-            {
-                valueBuffer = operator new(sizeof(void*));
-                void* obj = *(void**)ref;
-                *(void**)valueBuffer = obj;
-                if( obj && subType )
-                    typeInfo->GetEngine()->AddRefScriptObject(obj, subType);
-            }
-            else if( subType && (subType->GetFlags() & asOBJ_REF) )
-            {
-                valueBuffer = ref;
-                typeInfo->GetEngine()->AddRefScriptObject(valueBuffer, subType);
-            }
-            else if( subTypeId & asTYPEID_MASK_OBJECT )
-            {
-                if( subType )
-                    valueBuffer = typeInfo->GetEngine()->CreateScriptObjectCopy(ref, subType);
-            }
-            else
-            {
-                valueBuffer = operator new(subTypeSize);
-                std::memcpy( valueBuffer, ref, subTypeSize );
-            }
+            delete this;
         }
+    }
 
-        void Get( void* outRef )
+    bool HasValue() const
+    {
+        return hasValue;
+    }
+
+    void Clear()
+    {
+        if( !hasValue )
+            return;
+
+        asITypeInfo* subType = GetSubTypeInfo();
+
+        if( valueBuffer )
         {
-            asIScriptContext* ctx = asGetActiveContext();
-
-            if( !hasValue )
-            {
-                if( ctx != nullptr )
-                    ctx->SetException( "null pointer value in optional!", true );
-                return;
-            }
-
-            asITypeInfo* subType = GetSubTypeInfo();
-
             if( subTypeId & asTYPEID_OBJHANDLE )
             {
                 void* obj = *(void**)valueBuffer;
-                *(void**)outRef = obj;
                 if( obj && subType )
-                    typeInfo->GetEngine()->AddRefScriptObject(obj, subType);
+                    typeInfo->GetEngine()->ReleaseScriptObject(obj, subType);
+                operator delete(valueBuffer);
             }
             else if( subType && (subType->GetFlags() & asOBJ_REF) )
             {
-                *(void**)outRef = valueBuffer;
-                typeInfo->GetEngine()->AddRefScriptObject(valueBuffer, subType);
+                typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, subType);
             }
             else if( subTypeId & asTYPEID_MASK_OBJECT )
             {
                 if( subType )
-                    typeInfo->GetEngine()->AssignScriptObject(outRef, valueBuffer, subType);
+                    typeInfo->GetEngine()->ReleaseScriptObject(valueBuffer, subType);
             }
             else
             {
-                std::memcpy( outRef, valueBuffer, subTypeSize );
+                operator delete(valueBuffer);
             }
         }
 
-#if ASOPTIONAL_ADD_NULLOPT
-        static ASOptional* FactoryNullOptional( asITypeInfo* typeInfo, ASNullOptional* )
+        valueBuffer = nullptr;
+        hasValue = false;
+    }
+
+    void Set( void* ref )
+    {
+        Clear();
+
+        if( !ref )
+            return;
+
+        hasValue = true;
+        asITypeInfo* subType = GetSubTypeInfo();
+
+        if( subTypeId & asTYPEID_OBJHANDLE )
         {
-            return new ASOptional(typeInfo);
+            valueBuffer = operator new(sizeof(void*));
+            void* obj = *(void**)ref;
+            *(void**)valueBuffer = obj;
+            if( obj && subType )
+                typeInfo->GetEngine()->AddRefScriptObject(obj, subType);
         }
+        else if( subType && (subType->GetFlags() & asOBJ_REF) )
+        {
+            valueBuffer = ref;
+            typeInfo->GetEngine()->AddRefScriptObject(valueBuffer, subType);
+        }
+        else if( subTypeId & asTYPEID_MASK_OBJECT )
+        {
+            if( subType )
+                valueBuffer = typeInfo->GetEngine()->CreateScriptObjectCopy(ref, subType);
+        }
+        else
+        {
+            valueBuffer = operator new(subTypeSize);
+            std::memcpy( valueBuffer, ref, subTypeSize );
+        }
+    }
+
+    void Get( void* outRef )
+    {
+        asIScriptContext* ctx = asGetActiveContext();
+
+        if( !hasValue )
+        {
+            if( ctx != nullptr )
+                ctx->SetException( "null pointer value in optional!", true );
+            return;
+        }
+
+        asITypeInfo* subType = GetSubTypeInfo();
+
+        if( subTypeId & asTYPEID_OBJHANDLE )
+        {
+            void* obj = *(void**)valueBuffer;
+            *(void**)outRef = obj;
+            if( obj && subType )
+                typeInfo->GetEngine()->AddRefScriptObject(obj, subType);
+        }
+        else if( subType && (subType->GetFlags() & asOBJ_REF) )
+        {
+            *(void**)outRef = valueBuffer;
+            typeInfo->GetEngine()->AddRefScriptObject(valueBuffer, subType);
+        }
+        else if( subTypeId & asTYPEID_MASK_OBJECT )
+        {
+            if( subType )
+                typeInfo->GetEngine()->AssignScriptObject(outRef, valueBuffer, subType);
+        }
+        else
+        {
+            std::memcpy( outRef, valueBuffer, subTypeSize );
+        }
+    }
+
+#if ASOPTIONAL_ADD_NULLOPT
+    static ASOptional* FactoryNullOptional( asITypeInfo* typeInfo, ASNullOptional* )
+    {
+        return new ASOptional(typeInfo);
+    }
 #endif
 
-        static ASOptional* Factory( asITypeInfo* typeInfo )
+    static ASOptional* Factory( asITypeInfo* typeInfo )
+    {
+        return new ASOptional( typeInfo );
+    }
+
+    static ASOptional* FactoryWithValue( asITypeInfo* typeInfo, void* valueRef )
+    {
+        ASOptional* opt = new ASOptional( typeInfo );
+
+        if( opt && valueRef )
+            opt->Set( valueRef );
+
+        return opt;
+    }
+
+    static ASOptional* FactoryGeneric( asITypeInfo* typeInfo, void* listBuffer )
+    {
+        asIScriptContext* ctx = asGetActiveContext();
+
+        asUINT* buffer = reinterpret_cast<asUINT*>(listBuffer);
+        asUINT elementCount = *buffer++; 
+
+        if( elementCount > 1 )
+        {
+            if( ctx != nullptr ) {
+                ctx->SetException( "Too many arguments! Expected one.", true );
+            }
+
+            return nullptr;
+        }
+
+        if( elementCount == 0 )
         {
             return new ASOptional( typeInfo );
         }
 
-        static ASOptional* FactoryWithValue( asITypeInfo* typeInfo, void* valueRef )
+        return ASOptional::FactoryWithValue( typeInfo, buffer );
+    }
+
+    static void AssignValueWrapper( ASOptional* opt, void* valueRef )
+    {
+        if( opt )
+            opt->Set( valueRef );
+    }
+
+    static void SetValueWrapper( ASOptional* opt, void* valueRef )
+    {
+        if( opt )
+            opt->Set( valueRef );
+    }
+
+    void* GetValuePointer()
+    {
+        asIScriptContext* ctx = asGetActiveContext();
+
+        if( !hasValue )
         {
-            ASOptional* opt = new ASOptional( typeInfo );
-
-            if( opt && valueRef )
-                opt->Set( valueRef );
-
-            return opt;
+            if( ctx != nullptr )
+                ctx->SetException( "null pointer value in optional!", true );
+            return nullptr;
         }
 
-        static ASOptional* FactoryGeneric( asITypeInfo* typeInfo, void* listBuffer )
+        if( subTypeId & asTYPEID_OBJHANDLE )
         {
-            asIScriptContext* ctx = asGetActiveContext();
-
-            asUINT* buffer = reinterpret_cast<asUINT*>(listBuffer);
-            asUINT elementCount = *buffer++; 
-
-            if( elementCount > 1 )
-            {
-                if( ctx != nullptr ) {
-                    ctx->SetException( "Too many arguments! Expected one.", true );
-                }
-
-                return nullptr;
-            }
-
-            if( elementCount == 0 )
-            {
-                return new ASOptional( typeInfo );
-            }
-
-            return ASOptional::FactoryWithValue( typeInfo, buffer );
-        }
-
-        static void AssignValueWrapper( ASOptional* opt, void* valueRef )
-        {
-            if( opt )
-                opt->Set( valueRef );
-        }
-
-        static void SetValueWrapper( ASOptional* opt, void* valueRef )
-        {
-            if( opt )
-                opt->Set( valueRef );
-        }
-
-        void* GetValuePointer()
-        {
-            asIScriptContext* ctx = asGetActiveContext();
-
-            if( !hasValue )
-            {
-                if( ctx != nullptr )
-                    ctx->SetException( "null pointer value in optional!", true );
-                return nullptr;
-            }
-
-            if( subTypeId & asTYPEID_OBJHANDLE )
-            {
-                return valueBuffer;
-            }
-
-            asITypeInfo* subType = GetSubTypeInfo();
-
-            if( subType && (subType->GetFlags() & asOBJ_REF) )
-            {
-                return valueBuffer;
-            }
-
             return valueBuffer;
         }
 
-        static void* GetValueWrapper( ASOptional* opt )
+        asITypeInfo* subType = GetSubTypeInfo();
+
+        if( subType && (subType->GetFlags() & asOBJ_REF) )
         {
-            return opt ? opt->GetValuePointer() : nullptr;
+            return valueBuffer;
         }
 
-        static inline void Register( asIScriptEngine* engine )
-        {
-            REGISTER_OBJECT_TYPE( "optional<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE, "Generic container that may or may not contain a value of type T." );
-            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(ASOptional, AddRef), asCALL_THISCALL, "Increments the reference count of the optional container." );
-            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(ASOptional, Release), asCALL_THISCALL, "Decrements the reference count and destroys the optional when 0." );
+        return valueBuffer;
+    }
 
-            // Default constructor
-            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in)",
-                asFUNCTION((ASOptional*(*)(asITypeInfo*))ASOptional::Factory), asCALL_CDECL, "Constructs an empty optional container." );
+    static void* GetValueWrapper( ASOptional* opt )
+    {
+        return opt ? opt->GetValuePointer() : nullptr;
+    }
 
-            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_LIST_FACTORY, "optional<T>@ f(int &in, const T &in value) { repeat T }",
-                asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryGeneric), asCALL_CDECL, "Constructs an optional container initialized with a generic initializer list" );
-
-            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const T &in value)",
-                asFUNCTION((ASOptional*(*)(asITypeInfo*, void*))ASOptional::FactoryWithValue), asCALL_CDECL, "Constructs an optional container initialized with a value." );
-
-            REGISTER_OBJECT_METHOD( "optional<T>", "bool has_value() const", asMETHOD(ASOptional, HasValue), asCALL_THISCALL, "Returns true if the optional contains a value, false otherwise." );
-            REGISTER_OBJECT_METHOD( "optional<T>", "void clear()", asMETHOD(ASOptional, Clear), asCALL_THISCALL, "Clears the contained value and resets the optional to an empty state." );
-            REGISTER_OBJECT_METHOD( "optional<T>", "const T& value() const", asFUNCTION(ASOptional::GetValueWrapper), asCALL_CDECL_OBJFIRST, "Returns a reference to the contained value. Throws a script exception if empty." );
-            REGISTER_OBJECT_METHOD( "optional<T>", "void set(const T &in value)", asFUNCTION(ASOptional::SetValueWrapper), asCALL_CDECL_OBJFIRST, "Sets the value contained in the optional." );
-
-            REGISTER_OBJECT_METHOD( "optional<T>", "optional<T>& opAssign(const T &in value)",
-                asFUNCTION(ASOptional::AssignValueWrapper), asCALL_CDECL_OBJFIRST, "Assigns a new value to the optional container." );
-
+    static inline void Register( asIScriptEngine* )
+    {
 #if ASOPTIONAL_ADD_NULLOPT
-            REGISTER_OBJECT_TYPE( "nullopt_t", 0, asOBJ_REF, "" );
+        REGISTER_OBJECT_TYPE( "nullopt_t", 0, asOBJ_REF, "" );
 
-            REGISTER_OBJECT_BEHAVIOUR("nullopt_t", asBEHAVE_ADDREF, "void f()",
-                asMETHOD(ASNullOptional, AddRef), asCALL_THISCALL, "" );
+        REGISTER_OBJECT_BEHAVIOUR("nullopt_t", asBEHAVE_ADDREF, "void f()",
+            asMETHOD(ASNullOptional, AddRef), asCALL_THISCALL, "" );
 
-            REGISTER_OBJECT_BEHAVIOUR("nullopt_t", asBEHAVE_RELEASE, "void f()",
-                asMETHOD(ASNullOptional, Release), asCALL_THISCALL, "" );
+        REGISTER_OBJECT_BEHAVIOUR("nullopt_t", asBEHAVE_RELEASE, "void f()",
+            asMETHOD(ASNullOptional, Release), asCALL_THISCALL, "" );
 
-            REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const nullopt_t@ value)",
-                asFUNCTION((ASOptional*(*)(asITypeInfo*, ASNullOptional*))ASOptional::FactoryNullOptional), asCALL_CDECL, "Constructs a empty optional." );
+        REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const nullopt_t@ value)",
+            asFUNCTION((ASOptional*(*)(asITypeInfo*, ASNullOptional*))ASOptional::FactoryNullOptional), asCALL_CDECL, "Constructs a empty optional." );
 
-            static ASNullOptional* g_nullopt = new ASNullOptional();
+        static ASNullOptional* g_nullopt = new ASNullOptional();
 
-            REGISTER_GLOBAL_PROPERTY( "const nullopt_t@ nullopt", &g_nullopt, "" );
+        REGISTER_GLOBAL_PROPERTY( "const nullopt_t@ nullopt", &g_nullopt, "" );
 #endif
-        }
-
+    }
 };
