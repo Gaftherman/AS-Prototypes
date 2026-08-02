@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 #ifndef NDEBUG
         if( arg == "--test" )
         {
-            std::filesystem::current_path( "../../" );
+            std::filesystem::current_path( "Tests/" );
             std::cout << "Set working directory to ";
             ASConsole::InitWindows();
             ASConsole::SetColor( ASConsole::Color::ForeGround, 0, 255, 0 );

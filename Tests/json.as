@@ -9,14 +9,14 @@ void main()
     JSON@ validObject = json::loads( "{\"this is a valid key\":\"in a valid object\"}" );
     Expect( "json::loads valid", true, validObject !is null );
 
-    @validObject = json::load( "Tests/json/load.json" );
+    @validObject = json::load( "json/load.json" );
     Expect( "json::load valid", true, validObject !is null && validObject.to_string() == "[\"load\"]" );
 
     string deserialized = json::dumps( validObject );
     Expect( "json::dumps valid", true, deserialized == "[\"load\"]" );
 //    Console::WriteLine( "Serialized: " + deserialized );
 
-    Expect( "json::dump valid", true, json::dump(validObject, "Tests/json/dump.json" ) && ( @validObject = json::load( "Tests/json/dump.json" ) ) !is null && validObject.to_string() == "[\"load\"]" );
+    Expect( "json::dump valid", true, json::dump(validObject, "json/dump.json" ) && ( @validObject = json::load( "json/dump.json" ) ) !is null && validObject.to_string() == "[\"load\"]" );
 
     bool result = true;
 

@@ -158,7 +158,7 @@ struct CustomConsoleReporter : public doctest::IReporter
 
             if( stats.numAsserts != ( stats.numAsserts - stats.numAssertsFailed ) )
             {
-                std::cout << "out of ";
+                std::cout << " out of ";
                 _cover( stats.numAsserts, 50, 255, 50 );
             }
 
@@ -187,11 +187,9 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     {
         std::vector<fs::path> paths;
 
-        fs::path dir( "Tests/" );
-
         std::error_code ec;
 
-        for( const auto& entry : fs::directory_iterator( dir, ec ) )
+        for( const auto& entry : fs::directory_iterator( fs::current_path(), ec ) )
         {
             if( !entry.is_regular_file() )
                 continue;
@@ -244,7 +242,10 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     else
     {
         ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
-        ASConsole::WriteLine( "No test scripts found in Tests/" );
+        ASConsole::Write( "No test scripts found in \"" );
+        ASConsole::Write( fs::current_path().string() );
+        ASConsole::WriteLine( "\"" );
+        Tests::TotalFails++;
         ASConsole::ResetColor();
     }
 
@@ -272,7 +273,7 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     Tests::TotalPasses += Tests::Passes;
     Tests::Passes = 0;
 
-    GenerateScriptPredefined(engine, "as.predefined");
+    GenerateScriptPredefined(engine, "../as.predefined");
 
     engine->ShutDownAndRelease();
 
