@@ -4,13 +4,21 @@ AS-Prototypes is a C++ executable (`asrun`) designed to load, compile, and execu
 
 [Español](README_ES.md)
 
-## Requirements
+## Usage
+
+Drag and drop any AngelScript `.as` file directly to `asrun` or provide path argument:
+
+```powershell
+asrun.exe path/to/script.as
+```
+
+## Building
+
+### Requirements
 
 - CMake 3.15 or higher
 - C++17 compatible compiler (MSVC 2019/2022, GCC, Clang)
 - Git (required for CMake FetchContent)
-
-## Building
 
 Use CMake to configure and build the executable.
 
@@ -23,14 +31,6 @@ cmake --build build --config Debug
 ```
 
 The compiled binary will be located at `build/Debug/asrun.exe`.
-
-## Usage
-
-Pass any AngelScript `.as` file directly to `asrun`:
-
-```powershell
-.\build\Debug\asrun.exe path/to/script.as
-```
 
 ### Running Tests
 
