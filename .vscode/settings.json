@@ -1,0 +1,36 @@
+{
+    "angelScript.implicitMutualInclusion": false,
+    "angelScript.builtinArrayType": "array",
+    "angelScript.builtinStringType": "string",
+    "angelScript.definedSymbols": [
+        "EDITOR_ONLY"
+    ],
+    "angelScript.explicitPropertyAccessor": false,
+    "angelScript.supportsForEach": true,
+    "angelScript.files.angelScript": [
+        "*.as"
+    ],
+    "angelScript.forceIncludePredefined": [
+        "as.predefined"
+    ],
+    "angelScript.files.exclude": [
+        ".github/**",
+        ".vscode/**",
+        "build/**",
+        "src/**"
+    ],
+    "angelScript.formatter.indentSpaces": 4,
+    "angelScript.formatter.maxBlankLines": 1,
+    "angelScript.formatter.useTabIndent": false,
+    "angelScript.includePath": [
+        "Tests"
+    ],
+    // Not sure about these:
+    "angelScript.hoistEnumParentScope": false,
+    "angelScript.allowUnicodeIdentifiers": false,
+    "angelScript.characterLiterals": false,
+    "angelScript.completion.builtinKeywords": true,
+    "angelScript.completion.snippets": true,
+    "angelScript.supportsDigitSeparators": false,
+    "angelScript.supportsTypedEnumerations": false,
+}
