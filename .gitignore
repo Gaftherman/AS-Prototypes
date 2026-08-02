@@ -16,7 +16,6 @@ Makefile
 compile_commands.json
 
 # IDE / Editor files
-.vscode/
 .idea/
 *.user
 *.suo
