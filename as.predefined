@@ -242,19 +242,11 @@ class JSON
 uint scan(const string&in str, ?&out...);
 string format(const string&in fmt, const ?&in...);
 string formatInt(int64 val, const string&in options = "", uint width = 0);
-/// Addon: ASException
-/// Line of where the exception was raised.
 string formatUInt(uint64 val, const string&in options = "", uint width = 0);
 string formatFloat(double val, const string&in options = "", uint width = 0, uint precision = 0);
 int64 parseInt(const string&in, uint base = 10, uint&out byteCount = 0);
-/// Addon: ASException
-/// Get the call stack in string form.
 uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
-/// Addon: ASException
-/// Get the current exception message.
 double parseFloat(const string&in, uint&out byteCount = 0);
-/// Addon: ASException
-/// Get the call stack in string form.
 string join(const string[]&in, const string&in);
 float fpFromIEEE(uint);
 uint fpToIEEE(float);
@@ -354,8 +346,12 @@ namespace json
         /// Ignore invalid UTF-8 sequences.
         ignore
     }
+    /// Loads and parses a JSON file from the filesystem.
+    JSON@ load(const string&in filePath, bool ignore_comments = true);
     /// Parses a serialized JSON string.
     JSON@ loads(const string&in serialized, bool ignore_comments = true);
     /// Serializes a JSON object into a formatted string.
     string dumps(const JSON@ obj, int indents = -1, error_handler errors = error_handler::strict);
+    /// Serializes a JSON object and writes it to a file.
+    bool dump(const JSON@ obj, const string&in filePath, int indents = -1, error_handler errors = error_handler::strict);
 }
