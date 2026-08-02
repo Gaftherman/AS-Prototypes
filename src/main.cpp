@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <angelscript.h>
 #include <scriptbuilder/scriptbuilder.h>
@@ -90,7 +91,7 @@ int ExecuteSingleScript(asIScriptEngine* engine, const std::string& scriptPath, 
 
     r = ctx->Execute();
 
-    ASConsole::ResetColor(); // Reset colors if a module has set them
+    ASConsole::ResetColor(); // Reset colors if a module has set them -TODO maybe use AS module shutdown callbacks
 
     int exitCode = 0;
     if (r == asEXECUTION_FINISHED) {
@@ -126,6 +127,13 @@ int main(int argc, char **argv) {
 #ifndef NDEBUG
         if( arg == "--test" )
         {
+            std::filesystem::current_path( "../../" );
+            std::cout << "Set working directory to ";
+            ASConsole::InitWindows();
+            ASConsole::SetColor( ASConsole::Color::ForeGround, 0, 255, 0 );
+            std::cout << std::filesystem::current_path();
+            ASConsole::ResetColor();
+            std::cout << std::endl;
             doctest::Context context;
             context.addFilter("reporters", "custom_console");
             return context.run();

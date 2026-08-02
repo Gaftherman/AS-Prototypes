@@ -182,44 +182,26 @@ TEST_CASE( "AngelScript Test Directory Runner" )
 
     REQUIRE( engine != nullptr );
 
-    // Function to find test script paths in ../../Tests, ../Tests, Tests, etc.
+    // Function to find test script paths in Tests, Tests, Tests, etc.
     auto FindTestScriptFiles = []() -> std::vector<fs::path>
     {
         std::vector<fs::path> paths;
 
-        constexpr std::array candidates = {
-            "../../Tests",
-            "../Tests",
-            "Tests",
-            "../../tests",
-            "../tests",
-            "tests"
-        };
+        fs::path dir( "Tests/" );
 
-        for( const auto& candidate : candidates )
+        std::error_code ec;
+
+        for( const auto& entry : fs::directory_iterator( dir, ec ) )
         {
-            fs::path dir(candidate);
-
-            std::error_code ec;
-
-            if( !fs::exists( dir, ec ) || !fs::is_directory( dir, ec ) )
+            if( !entry.is_regular_file() )
                 continue;
 
-            for( const auto& entry : fs::directory_iterator( dir, ec ) )
+            const auto& path = entry.path();
+
+            if( path.extension() == ".as" )
             {
-                if( !entry.is_regular_file() )
-                    continue;
-
-                const auto& path = entry.path();
-
-                if( path.extension() == ".as" )
-                {
-                    paths.emplace_back( path );
-                }
+                paths.emplace_back( path );
             }
-
-            if( !paths.empty() )
-                break;
         }
 
         std::sort( paths.begin(), paths.end(), []( const fs::path& a, const fs::path& b )
@@ -262,7 +244,7 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     else
     {
         ASConsole::SetColor( ASConsole::Color::ForeGround, 255, 60, 60 );
-        ASConsole::WriteLine( "No test scripts found in ../../Tests/" );
+        ASConsole::WriteLine( "No test scripts found in Tests/" );
         ASConsole::ResetColor();
     }
 
@@ -290,7 +272,7 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     Tests::TotalPasses += Tests::Passes;
     Tests::Passes = 0;
 
-    GenerateScriptPredefined(engine, "../../as.predefined");
+    GenerateScriptPredefined(engine, "as.predefined");
 
     engine->ShutDownAndRelease();
 

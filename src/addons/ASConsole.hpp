@@ -59,7 +59,7 @@ namespace ASConsole
         WriteLineEmpty();
     }
 
-    static inline void Register( asIScriptEngine* engine )
+    static inline void InitWindows()
     {
 #if defined(_WIN32) || defined(_WIN64)
         HANDLE hOut = GetStdHandle( STD_OUTPUT_HANDLE );
@@ -75,6 +75,11 @@ namespace ASConsole
             }
         }
 #endif
+    }
+
+    static inline void Register( asIScriptEngine* engine )
+    {
+        InitWindows();
 
         engine->SetDefaultNamespace( "Console" );
 
