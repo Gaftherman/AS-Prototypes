@@ -228,6 +228,7 @@ int RegisterObjectTypeWithComment(asIScriptEngine* engine, const char* obj, int 
     {
         ASDoc::RegisterObjectTypeComment(obj, comment ? comment : "", funcSig);
     }
+    assert( r >= 0 );
     return r;
 }
 
@@ -238,6 +239,7 @@ int RegisterEnumWithComment(asIScriptEngine* engine, const char* type, const cha
     {
         ASDoc::RegisterEnumComment(type, comment ? comment : "", funcSig);
     }
+    assert( r >= 0 );
     return r;
 }
 
@@ -248,6 +250,7 @@ int RegisterEnumValueWithComment(asIScriptEngine* engine, const char* type, cons
     {
         ASDoc::RegisterEnumValueComment(type, valName, comment ? comment : "", funcSig);
     }
+    assert( r >= 0 );
     return r;
 }
 
@@ -261,6 +264,7 @@ int RegisterObjectMethodWithComment(asIScriptEngine* engine, const char* obj, co
         if (!func) func = engine->GetFunctionById(r);
         if (func) ASDoc::RegisterScopedFunctionComment(type, func, comment ? comment : "", funcSig);
     }
+    assert( r >= 0 );
     return r;
 }
 
@@ -272,6 +276,7 @@ int RegisterGlobalFunctionWithComment(asIScriptEngine* engine, const char* decla
         asIScriptFunction* func = engine->GetGlobalFunctionByDecl(declaration);
         if (func) ASDoc::RegisterFunctionComment(func, comment ? comment : "", funcSig);
     }
+    assert( r >= 0 );
     return r;
 }
 
@@ -284,6 +289,7 @@ int RegisterObjectBehaviourWithComment(asIScriptEngine* engine, const char* obj,
         asIScriptFunction* func = engine->GetFunctionById(r);
         if (func) ASDoc::RegisterScopedFunctionComment(type, func, comment ? comment : "", funcSig);
     }
+    assert( r >= 0 );
     return r;
 }
 
@@ -301,6 +307,7 @@ int RegisterObjectPropertyWithComment(asIScriptEngine* engine, const char* obj, 
             ASDoc::RegisterPropertyComment(type, propName, comment, funcSig);
         }
     }
+    assert( r >= 0 );
     return r;
 }
 
@@ -314,6 +321,7 @@ int RegisterGlobalPropertyWithComment(asIScriptEngine* engine, const char* decla
         std::string propName = (spacePos != std::string::npos) ? declStr.substr(spacePos + 1) : declStr;
         ASDoc::RegisterGlobalPropertyComment(propName, comment, funcSig);
     }
+    assert( r >= 0 );
     return r;
 }
 
