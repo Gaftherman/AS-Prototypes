@@ -136,7 +136,9 @@ int main(int argc, char **argv) {
             std::cout << std::endl;
             doctest::Context context;
             context.addFilter("reporters", "custom_console");
-            return context.run();
+            int result = context.run();
+            CASDocRegistry::Shutdown();
+            return result;
         }
 #endif
         if (arg == "--no-pause") {
@@ -184,6 +186,8 @@ int main(int argc, char **argv) {
     int exitCode = ExecuteSingleScript(engine, scriptPath, cleanArgs);
 
     engine->ShutDownAndRelease();
+
+    CASDocRegistry::Shutdown();
 
     if (shouldPause) {
         PauseConsole();

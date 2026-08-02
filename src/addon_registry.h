@@ -4,6 +4,7 @@
 #include <angelscript.h>
 #include "addons/CString.h"
 #include "as_predefined.h"
+#include "CASDocRegistry.hpp"
 
 // Other addons
 //#include "utility/CString.h"

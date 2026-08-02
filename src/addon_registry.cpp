@@ -16,8 +16,6 @@
 #include <iostream>
 #include <string>
 
-#include "CASDocRegistry.hpp"
-
 // Our add-ons prototypes
 #include "addons/ASConsole.hpp"
 #include "addons/ASDispose.hpp"
@@ -56,16 +54,17 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     RegisterScriptHandle(engine);
 
 #ifndef NDEBUG
+    CASDocRegistry::Verbose = true;
     CASDocRegistry::GenerateDocumentation = true;
     CASDocRegistry::GeneratePredefined = true;
 #endif
 
-    CASDocRegistry::RegisterInterfaces(engine, true);
+    CASDocRegistry::Engine = engine;
+    CASDocRegistry::RegisterInterfaces();
 
     ASConsole::Register( engine );
 
     ASException::Register( engine );
-    ASOptional::Register( engine );
     ASDispose::Register( engine );
 
     ASJSON::Register( engine );
