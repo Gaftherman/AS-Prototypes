@@ -10,6 +10,7 @@
 #include <scriptfile/scriptfilesystem.h>
 #include <scripthandle/scripthandle.h>
 #include <datetime/datetime.h>
+#include <weakref/weakref.h>
 
 #include <fstream>
 #include <sstream>
@@ -28,30 +29,16 @@ namespace AddonRegistry {
 bool RegisterAllAddons(asIScriptEngine* engine) {
     if (!engine) return false;
 
-    // 1. Base std::string
     RegisterStdString(engine);
-
-    // 2. Dynamic Array template (Required before RegisterStdStringUtils)
     RegisterScriptArray(engine, true);
-
-    // 3. std::string utilities (Requires array<string>)
     RegisterStdStringUtils(engine);
-
-    // 4. DateTime (Required before RegisterScriptFileSystem)
     RegisterScriptDateTime(engine);
-
-    // 5. File & Filesystem I/O
     RegisterScriptFile(engine);
     RegisterScriptFileSystem(engine);
-
-    // 7. Dictionary
     RegisterScriptDictionary(engine);
-
-    // 8. Math library
     RegisterScriptMath(engine);
-
-    // 9. Script Handles
     RegisterScriptHandle(engine);
+    RegisterScriptWeakRef(engine);
 
     ASException::Register( engine );
     ASDispose::Register( engine );
