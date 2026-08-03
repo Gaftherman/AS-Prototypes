@@ -341,7 +341,6 @@ void assert(bool condition, const string&in = "");
 const nullopt_t@ nullopt;
 /// Access the CLI console
 console_t@ Console;
-/// Addon: ASException
 namespace Exception
 {
     /// Raises a script exception. if canCatch is false the script's catch block won't be called.
@@ -358,10 +357,10 @@ namespace Exception
     string Message();
     /// Get the call stack in string form.
     string CallStack();
-    /// Get the path to the script that raised the last exception.
-    void ScriptSection(string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void);
     /// Get a handle to the dictionary data if the exception provided one when raised.
     dictionary@ Dictionary();
+    /// Get the path to the script that raised the last exception.
+    void ScriptSection(string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void);
 }
 namespace Tests
 {

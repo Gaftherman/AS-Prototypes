@@ -1,8 +1,14 @@
-#include "addon_registry.h"
+#pragma once
+#include <angelscript.h>
+#include <scriptdictionary/scriptdictionary.h>
+
 #include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <optional>
+
+// Set your custom string if any.
+using ScriptString = std::string;
 
 namespace ASException
 {
@@ -164,9 +170,9 @@ namespace ASException
         return -1;
     }
 
-    static CString CallStack()
+    static ScriptString CallStack()
     {
-        CString str;
+        ScriptString str;
 
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
@@ -190,9 +196,9 @@ namespace ASException
         return nullptr;
     }
 
-    static CString Message()
+    static ScriptString Message()
     {
-        CString str;
+        ScriptString str;
 
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
@@ -214,12 +220,12 @@ namespace ASException
     }
 
     static void ScriptSection(
-        CString* absolute,
-        CString* relative,
-        CString* fileName,
-        CString* methodName,
-        CString* nameSpace,
-        CString* objectName
+        ScriptString* absolute,
+        ScriptString* relative,
+        ScriptString* fileName,
+        ScriptString* methodName,
+        ScriptString* nameSpace,
+        ScriptString* objectName
     )
     {
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
@@ -300,7 +306,7 @@ namespace ASException
         }
     }
 
-    inline void ThrowScriptException( std::pair<ExceptionModuleData*, asIScriptContext*> context, const CString& message, bool canCatch )
+    inline void ThrowScriptException( std::pair<ExceptionModuleData*, asIScriptContext*> context, const ScriptString& message, bool canCatch )
     {
         // Clear previous exception data
         Clear( context.first );
@@ -310,7 +316,7 @@ namespace ASException
         context.second->SetException( message.c_str(), canCatch );
     }
 
-    static void Throw( const CString& message, bool canCatch = true )
+    static void Throw( const ScriptString& message, bool canCatch = true )
     {
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
@@ -318,7 +324,7 @@ namespace ASException
         }
     }
 
-    static void ThrowDictionary( const CString& message, CScriptDictionary* additionalData, bool canCatch = true )
+    static void ThrowDictionary( const ScriptString& message, CScriptDictionary* additionalData, bool canCatch = true )
     {
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
@@ -339,20 +345,5 @@ namespace ASException
                 }
             }
         }
-    }
-
-    static inline void Register( asIScriptEngine* engine )
-    {
-        engine->SetDefaultNamespace( "Exception" );
-        REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, bool canCatch = true )", asFUNCTION(ASException::Throw), asCALL_CDECL, "Raises a script exception. if canCatch is false the script's catch block won't be called." );
-        REGISTER_GLOBAL_FUNCTION( "void Throw( const string&in exception, dictionary@ additionalData, bool canCatch = true )", asFUNCTION(&::ASException::ThrowDictionary), asCALL_CDECL, "Raises a script exception with aditional metadata dictionary. if canCatch is false the script's catch block won't be called." );
-        REGISTER_GLOBAL_FUNCTION( "void Clear()", asFUNCTION(ASException::ClearScripted), asCALL_CDECL, "Releases reference to the last exception. by default exceptions are cleared when new ones are created. Call this method after a catch block to clear all members." );
-        REGISTER_GLOBAL_FUNCTION( "int Id()", asFUNCTION(ASException::Id), asCALL_CDECL, "Get the current exception count. this value only increases for explicit script-throw exceptions." );
-        REGISTER_GLOBAL_FUNCTION( "int Line()", asFUNCTION(ASException::Line), asCALL_CDECL, "Line of where the exception was raised." );
-        REGISTER_GLOBAL_FUNCTION( "string Message()", asFUNCTION(ASException::Message), asCALL_CDECL, "Get the current exception message." );
-        REGISTER_GLOBAL_FUNCTION( "string CallStack()", asFUNCTION(ASException::CallStack), asCALL_CDECL, "Get the call stack in string form." );
-        REGISTER_GLOBAL_FUNCTION( "void ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void )", asFUNCTION(ASException::ScriptSection), asCALL_CDECL, "Get the path to the script that raised the last exception." );
-        REGISTER_GLOBAL_FUNCTION( "dictionary@ Dictionary()", asFUNCTION(ASException::Dictionary), asCALL_CDECL, "Get a handle to the dictionary data if the exception provided one when raised." );
-        engine->SetDefaultNamespace( "" );
     }
 }

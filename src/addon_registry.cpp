@@ -18,11 +18,8 @@
 #include <string>
 
 // Our add-ons prototypes
-#include "addons/Console.hpp"
 #include "addons/ASDispose.hpp"
-#include "addons/ASException.hpp"
 #include "addons/ASJSON.hpp"
-#include "addons/ASOptional.hpp"
 
 namespace AddonRegistry {
 
@@ -40,7 +37,6 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     RegisterScriptHandle(engine);
     RegisterScriptWeakRef(engine);
 
-    ASException::Register( engine );
     ASDispose::Register( engine );
 
     ASJSON::Register( engine );

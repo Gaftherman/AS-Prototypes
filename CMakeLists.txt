@@ -49,6 +49,7 @@ set(ANGELSCRIPT_ADDON_SOURCES
     ${ANGELSCRIPT_ADDON_DIR}/weakref/weakref.cpp
 
     # Our addons
+    src/addons/ASException.cpp
     src/addons/ASOptional.cpp
     src/addons/Console.cpp
 )
