@@ -62,6 +62,74 @@ namespace Tests
         return false;
     }
 
+    void ScriptAssert( bool condition, const CString& message )
+    {
+        if( condition )
+            return;
+
+        Console->Fore->rgb(255,0,0)
+            ->Back->rgb( 40, 0, 0 )
+            ->Write( "AngelScript assert: " );
+
+        if( !message.empty() )
+        {
+            Console->Fore->rgb(255,100,0)
+                ->Write( message );
+        }
+
+        Console->WriteLine();
+
+        asIScriptContext* ctx = asGetActiveContext();
+
+        asUINT stackSize = ctx->GetCallstackSize();
+
+        for( asUINT n = 0; n < stackSize; n++ )
+        {
+            const asIScriptFunction* function = ctx->GetFunction(n);
+
+            if( function != nullptr )
+            {
+                function = ctx->GetFunction(n);
+
+                ctx->SetException( !message.empty() ? message.c_str() : "assert" );
+
+                if( const char* cstr = function->GetDeclaration(); cstr != nullptr && cstr[0] != '\0' )
+                    Console->Fore->rgb( 0, 255, 200 )->Write( "Method: " )->Fore->rgb(255, 100,0)->WriteLine( cstr );
+
+                if( function->GetFuncType() == asFUNC_SCRIPT )
+                {
+                    const char* scriptSection = nullptr;
+
+                    int line = 0;
+                    if( n == 0 )
+                        line = ctx->GetExceptionLineNumber( 0, &scriptSection );
+                    else
+                        line = ctx->GetLineNumber( n, 0, &scriptSection );
+
+                    Console->Fore->rgb( 0, 255, 200 )->Write( "Line: " )->Fore->rgb(255, 100,0)->WriteLine( line );
+
+                    if( const char* cstr = function->GetNamespace(); cstr != nullptr && cstr[0] != '\0' )
+                    Console->Fore->rgb( 0, 255, 200 )->Write( "namespace: " )->Fore->rgb(255, 100,0)->WriteLine( cstr );
+
+                    if( const char* cstr = function->GetObjectName(); cstr != nullptr && cstr[0] != '\0' )
+                    Console->Fore->rgb( 0, 255, 200 )->Write( "class: " )->Fore->rgb(255, 100,0)->WriteLine( cstr );
+
+                    if( scriptSection != nullptr )
+                        Console->Fore->rgb( 0, 255, 200 )->Write( "file: " )->Fore->rgb(255, 100,0)->WriteLine( scriptSection );
+                }
+
+                if( n < stackSize - 1 )
+                {
+                    Console->Fore->rgb( 255, 0, 255 )->WriteLine( "--------------------" );
+                }
+            }
+        }
+
+        Console->ResetColor();
+
+        ctx->Abort();
+    }
+
     inline bool stop = false;
 
     inline void Stop()
@@ -98,7 +166,13 @@ class CASDocTests : public CASDocRegistry
             asFUNCTION(&::Tests::Stop),
             asCALL_CDECL
         ) &&
-        SetDefaultNamespace( "" );
+        SetDefaultNamespace( "" ) &&
+        RegisterGlobalFunction(
+            "Stops the execution of the program in-place if the condition is false, prints stack call and waits for user input."sv,
+            "void assert( bool condition, const string&in = \"\" )",
+            asFUNCTION(&::Tests::ScriptAssert),
+            asCALL_CDECL
+        );
     }
 };
 

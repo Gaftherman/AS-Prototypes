@@ -297,6 +297,8 @@ float abs(float);
 float floor(float);
 float fraction(float);
 bool Dispose(?&in);
+/// Stops the execution of the program in-place if the condition is false, prints stack call and waits for user input.
+void assert(bool condition, const string&in = "");
 /// Access the CLI console
 console_t@ Console;
 /// Addon: ASException
