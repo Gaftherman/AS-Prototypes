@@ -168,7 +168,7 @@ class CASDocTests : public CASDocRegistry
         ) &&
         SetDefaultNamespace( "" ) &&
         RegisterGlobalFunction(
-            "Stops the execution of the program in-place if the condition is false, prints stack call and waits for user input."sv,
+            "Stops the execution of the script in-place if the condition is false, prints stack call and waits for user input."sv,
             "void assert( bool condition, const string&in = \"\" )",
             asFUNCTION(&::Tests::ScriptAssert),
             asCALL_CDECL
