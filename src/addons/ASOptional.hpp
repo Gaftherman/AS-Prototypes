@@ -2,7 +2,7 @@
 
 #include <angelscript.h>
 
-#include <iostream>
+#include <memory>
 #include <cstring>
 
 // See ASOptional.cpp for registration
