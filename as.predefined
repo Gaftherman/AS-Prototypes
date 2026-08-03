@@ -239,6 +239,10 @@ class optional<T>
     /// Assigns a new value to the optional container.
     optional<T>& opAssign(const T&in value);
 }
+/// Generic empty property for using with optional<T>
+class nullopt_t
+{
+}
 /// Access the CLI console
 class console_t
 {
@@ -297,8 +301,10 @@ float abs(float);
 float floor(float);
 float fraction(float);
 bool Dispose(?&in);
-/// Stops the execution of the program in-place if the condition is false, prints stack call and waits for user input.
+/// Stops the execution of the script in-place if the condition is false, prints stack call and waits for user input.
 void assert(bool condition, const string&in = "");
+/// Generic null/empty optional for optional<T> operations.
+const nullopt_t@ nullopt;
 /// Access the CLI console
 console_t@ Console;
 /// Addon: ASException

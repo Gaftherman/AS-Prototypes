@@ -12,7 +12,6 @@ class pev
     }
 }
 
-#if ASOPTIONAL_ADD_NULLOPT
 optional<double> MethodReturnNullOpt()
 {
     return nullopt;
@@ -22,7 +21,6 @@ void MethodArgumentNullOptionalEmpty( optional<int> iOpt = nullopt )
 {
     Expect( "method with optional argument set to nullopt by default", true, !iOpt.has_value());
 }
-#endif
 
 optional<int> MethodReturnOptionalEmpty()
 {
@@ -114,14 +112,26 @@ void main()
     optHandleDecl.set(2);
     Expect( "optional<T>@ valid handles", true, optHandle !is null && optHandle.has_value() && optHandle.value() == 2 );
 
+    dictionary@ someData = {};
+    optional<dictionary@> optClassHandleCleared(someData);
+    @someData = null;
+    Expect( "optional<@> adds reference to handles", true, optClassHandleCleared.has_value() && optClassHandleCleared.value() !is null );
+
+    optional<int> optSetInt = 10;
+    Expect( "optional==opAssign int", true, optSetInt.has_value() && optSetInt.value() == 10 );
+
+    optional<string> optSetString = "string";
+    Expect( "optional==opAssign string", true, optSetString.has_value() && optSetString.value() == "string" );
+
+    optional<pev@> optSetHandle = entvarHandle;
+    Expect( "optional==opAssign @handle", true, optSetHandle.has_value() && optSetHandle.value() !is null );
+
 #if FALSE
     MethodArgumentOptionalEmpty();
 #endif
 
-#if ASOPTIONAL_ADD_NULLOPT
     optional<string> optFromNull( nullopt );
     Expect( "optional explicit constructor with nullopt", true, !optFromNull.has_value());
     Expect( "method returns empty optional via nullopt", true, !MethodReturnNullOpt().has_value());
     MethodArgumentNullOptionalEmpty();
-#endif
 }

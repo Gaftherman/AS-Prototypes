@@ -2,10 +2,8 @@
 
 #include <angelscript.h>
 
-#include <memory>
-
-// Whatever to register a std::nullopt-like object.
-#define ASOPTIONAL_ADD_NULLOPT 0
+#include <iostream>
+#include <cstring>
 
 // See ASOptional.cpp for registration
 class ASOptional
@@ -28,23 +26,11 @@ private:
         return subType;
     }
 
-#if ASOPTIONAL_ADD_NULLOPT
+public:
     class ASNullOptional
     {
-    public:
-        int refCount = 1;
-
-        void AddRef() { refCount++; }
-
-        void Release()
-        {
-            if (--refCount == 0)
-                delete this;
-        }
     };
-#endif
 
-public:
     ASOptional( asITypeInfo* tinfo ) : typeInfo(tinfo), valueBuffer(nullptr), refCount(1)
     {
         typeInfo->AddRef();
@@ -188,12 +174,10 @@ public:
         }
     }
 
-#if ASOPTIONAL_ADD_NULLOPT
     static ASOptional* FactoryNullOptional( asITypeInfo* typeInfo, ASNullOptional* )
     {
         return new ASOptional(typeInfo);
     }
-#endif
 
     static ASOptional* Factory( asITypeInfo* typeInfo )
     {
@@ -275,25 +259,5 @@ public:
     static void* GetValueWrapper( ASOptional* opt )
     {
         return opt ? opt->GetValuePointer() : nullptr;
-    }
-
-    static inline void Register( asIScriptEngine* )
-    {
-#if ASOPTIONAL_ADD_NULLOPT
-        REGISTER_OBJECT_TYPE( "nullopt_t", 0, asOBJ_REF, "" );
-
-        REGISTER_OBJECT_BEHAVIOUR("nullopt_t", asBEHAVE_ADDREF, "void f()",
-            asMETHOD(ASNullOptional, AddRef), asCALL_THISCALL, "" );
-
-        REGISTER_OBJECT_BEHAVIOUR("nullopt_t", asBEHAVE_RELEASE, "void f()",
-            asMETHOD(ASNullOptional, Release), asCALL_THISCALL, "" );
-
-        REGISTER_OBJECT_BEHAVIOUR( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const nullopt_t@ value)",
-            asFUNCTION((ASOptional*(*)(asITypeInfo*, ASNullOptional*))ASOptional::FactoryNullOptional), asCALL_CDECL, "Constructs a empty optional." );
-
-        static ASNullOptional* g_nullopt = new ASNullOptional();
-
-        REGISTER_GLOBAL_PROPERTY( "const nullopt_t@ nullopt", &g_nullopt, "" );
-#endif
     }
 };

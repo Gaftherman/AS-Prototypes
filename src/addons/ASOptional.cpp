@@ -6,6 +6,9 @@ class CASDocOptional : public CASDocRegistry
     bool Register() override
     {
         #define NAME "optional<T>"
+        #define NAME_NULL "nullopt_t"
+
+        static ASOptional::ASNullOptional* g_nullopt = new ASOptional::ASNullOptional();
 
         return
         RegisterObjectType(
@@ -86,7 +89,28 @@ class CASDocOptional : public CASDocRegistry
             "optional<T>& opAssign( const T &in value )",
             asFUNCTIONPR( ASOptional::AssignValueWrapper, ( ASOptional*, void* ), void ),
             asCALL_CDECL_OBJFIRST
+        ) &&
+        // Start of nullopt registry.
+        RegisterObjectType(
+            "Generic empty property for using with optional<T>"sv,
+            NAME_NULL,
+            0,
+            asOBJ_REF | asOBJ_NOCOUNT
+        ) &&
+        RegisterObjectBehaviour(
+            "Constructs an empty optional."sv,
+            NAME,
+            asBEHAVE_FACTORY,
+            "optional<T>@ f(int &in, const nullopt_t@ value)",
+            asFUNCTIONPR( ASOptional::FactoryNullOptional, ( asITypeInfo*, ASOptional::ASNullOptional* ), ASOptional* ),
+            asCALL_CDECL
+        ) &&
+        RegisterGlobalProperty(
+            "Generic null/empty optional for optional<T> operations."sv,
+            "const nullopt_t@ nullopt",
+            &g_nullopt
         );
+        ;
     }
 };
 
