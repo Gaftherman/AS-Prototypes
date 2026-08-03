@@ -50,13 +50,10 @@ void MethodOptionalImplicitConstruct( optional<int> iOpt )
     Expect( "method with implicitly constructed optional from primitive", true, iOpt.has_value()&& iOpt.value()== 1 );
 }
 
-// TODO: Allow for these type of constructors https://github.com/Gaftherman/AS-Prototypes/issues/7
-#if FALSE
-void MethodArgumentOptionalEmpty( optional<int> iOpt = optional<int>())
+void MethodArgumentOptionalEmpty( optional<int> iOpt = optional<int>() )
 {
-    Expect( "method with optional argument set to default empty constructor", true, !iOpt.has_value());
+    Expect( "method with optional argument set to \"optional<int>()\"", true, !iOpt.has_value());
 }
-#endif
 
 void main()
 {
@@ -130,10 +127,6 @@ void main()
     Expect( "optional==opAssign @handle", true, !optSetHandle.has_value() );
 #endif
 
-#if FALSE
-    MethodArgumentOptionalEmpty();
-#endif
-
     optional<string> optFromNull( nullopt );
     Expect( "optional explicit constructor with nullopt", true, !optFromNull.has_value());
     Expect( "method returns empty optional via nullopt", true, !MethodReturnNullOpt().has_value());
@@ -144,6 +137,30 @@ void main()
     optional<int> optSetToNull2(4);
     optSetToNull2 = nullopt;
     Expect( "optional explicit ==opAssign nullopt", true, !optSetToNull2.has_value());
+
+    MethodArgumentOptionalEmpty();
+
+    optional<int> OptFromOpt_wValue = optional<int>(1);
+    Expect( "optional explicit constructor with nullopt", true, OptFromOpt_wValue.has_value() && OptFromOpt_wValue.value() == 1 );
+
+    optional<int>@ OptFromOpt_wValueHandle = OptFromOpt_wValue;
+    optional<int> OptFromOpt_wValue2 = OptFromOpt_wValueHandle;
+    Expect( "optional explicit constructor with nullopt@", true, OptFromOpt_wValue2.has_value() && OptFromOpt_wValue2.value() == 1 );
+
+    optional<int> OptFromNull = null;
+    Expect( "optional explicit constructor with null", true, !OptFromNull.has_value() );
+
+    optional<int>@ OptHandleFromNull = null;
+    Expect( "optional@ explicit constructor with null", true, OptHandleFromNull is null );
+
+    optional<int>@ OptHandleWithValue = 1;
+    Expect( "optional@ assign handle to null", true, OptHandleWithValue.has_value() && ( @OptHandleWithValue = null ) is null );
+
+    @OptHandleWithValue = 1;
+    Expect( "optional@ assign null handle to int", true, OptHandleWithValue.has_value() && OptHandleWithValue.value() == 1 );
+
+    OptHandleWithValue = null;
+    Expect( "optional@ assign (value) to null", true, OptHandleWithValue !is null && !OptHandleWithValue.has_value() );
 
     Tests::Stop();
 }

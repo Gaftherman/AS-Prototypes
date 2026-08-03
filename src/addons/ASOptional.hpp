@@ -253,6 +253,28 @@ public:
         return opt ? opt->GetValuePointer() : nullptr;
     }
 
+    static void AssignOptionalWrapper( ASOptional* dest, ASOptional* src )
+    {
+        if( !dest || !src )
+            return;
+
+        if( !src->HasValue() )
+        {
+            dest->Clear();
+        }
+        else
+        {
+            void* srcPtr = src->GetValuePointer();
+
+            if( src->subTypeId & asTYPEID_OBJHANDLE )
+            {
+                srcPtr = src->valueBuffer;
+            }
+
+            dest->Set( srcPtr );
+        }
+    }
+
     class ASNullOptional
     {
         public:

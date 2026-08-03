@@ -266,6 +266,8 @@ class optional<T>
     void set(const T&in value);
     /// Assigns a new value to the optional container.
     optional<T>& opAssign(const T&in value);
+    /// Assign one optional from another.
+    optional<T>& opAssign(const optional<T>&in other);
     /// Sets the value contained in the optional.
     void set(const nullopt_t@ value);
     /// Assigns a new value to the optional container.

@@ -104,6 +104,13 @@ class CASDocOptional : public CASDocRegistry
             OPTIONAL_NAME "<T>& opAssign( const T &in value )",
             asFUNCTIONPR( ASOptional::AssignValueWrapper, ( ASOptional*, void* ), void ),
             asCALL_CDECL_OBJFIRST
+        ) &&
+        RegisterObjectMethod(
+            "Assign one optional from another."sv,
+            OPTIONAL_NAME "<T>",
+            OPTIONAL_NAME "<T>& opAssign( const " OPTIONAL_NAME "<T> &in other )",
+            asFUNCTIONPR( ASOptional::AssignOptionalWrapper, ( ASOptional*, ASOptional* ), void ),
+            asCALL_CDECL_OBJFIRST
 #if OPTIONAL_REGISTER_NULLOPT
         ) &&
         RegisterObjectType(
