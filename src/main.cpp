@@ -91,7 +91,7 @@ int ExecuteSingleScript(asIScriptEngine* engine, const std::string& scriptPath, 
 
     r = ctx->Execute();
 
-    Console::ResetColor(); // Reset colors if a module has set them -TODO maybe use AS module shutdown callbacks
+    Console->ResetColor(); // Reset colors if a module has set them -TODO maybe use AS module shutdown callbacks
 
     int exitCode = 0;
     if (r == asEXECUTION_FINISHED) {
@@ -128,16 +128,20 @@ int main(int argc, char **argv) {
         if( arg == "--test" )
         {
             std::filesystem::current_path( "Tests/" );
-            std::cout << "Set working directory to ";
-            Console::InitWindows();
-            Console::SetColor( Console::Color::ForeGround, 0, 255, 0 );
-            std::cout << std::filesystem::current_path();
-            Console::ResetColor();
-            std::cout << std::endl;
+
+            Console->Write( "Set working directory to " )
+                ->Fore->rgb(0,255,0)
+                ->Write( std::filesystem::current_path() )
+                ->ResetColor()
+                ->WriteLine();
+
             doctest::Context context;
             context.addFilter("reporters", "custom_console");
+
             int result = context.run();
+
             CASDocRegistry::Shutdown();
+
             return result;
         }
 #endif
@@ -188,6 +192,8 @@ int main(int argc, char **argv) {
     engine->ShutDownAndRelease();
 
     CASDocRegistry::Shutdown();
+
+    delete Console; // destructor resets color
 
     if (shouldPause) {
         PauseConsole();

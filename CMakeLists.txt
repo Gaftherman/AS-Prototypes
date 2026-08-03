@@ -49,6 +49,7 @@ set(ANGELSCRIPT_ADDON_SOURCES
 
     # Our addons
     src/addons/ASOptional.cpp
+    src/addons/Console.cpp
 )
 
 # Application sources
@@ -74,6 +75,8 @@ target_include_directories(asrun PRIVATE
 )
 
 target_link_libraries(asrun PRIVATE angelscript doctest::doctest)
+
+target_compile_definitions(asrun PRIVATE ASCONSOLE )
 
 if(MSVC)
     target_compile_options(asrun PRIVATE /W4 /EHsc /D_CRT_SECURE_NO_WARNINGS)

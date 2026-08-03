@@ -14,7 +14,7 @@ void main()
 
     string deserialized = json::dumps( validObject );
     Expect( "json::dumps valid", true, deserialized == "[\"load\"]" );
-//    Console::WriteLine( "Serialized: " + deserialized );
+//    Console.WriteLine( "Serialized: " + deserialized );
 
     Expect( "json::dump valid", true, json::dump(validObject, "json/dump.json" ) && ( @validObject = json::load( "json/dump.json" ) ) !is null && validObject.to_string() == "[\"load\"]" );
 

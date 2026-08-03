@@ -7,11 +7,13 @@
 #include <vector>
 #include <array>
 #include <filesystem>
+#include <mutex>
 
 #include "addon_registry.h"
 #include "as_predefined.h"
 
 #include "addons/Console.hpp"
+#include "CASDocRegistry.hpp"
 
 namespace fs = std::filesystem;
 
@@ -34,35 +36,57 @@ namespace Tests
 
         if( ctx != nullptr && expected == condition )
         {
-            Console::SetColor( Console::Color::ForeGround, 60, 255, 60 );
-            Console::Write( "Passed" );
-            Console::ResetColor();
-            std::cout << " test \"" << titleCStr << "\"" << "\n";
+            Console->Fore->rgb( 60, 255, 60 )
+                ->Write( "Passed" )
+                ->ResetColor()
+                ->Write( " test \"" )
+                ->Fore->rgb( 0, 255, 200 )
+                ->Write( titleCStr )
+                ->ResetColor()
+                ->WriteLine( "\"" );
             Tests::Passes++;
             return true;
         }
-        Console::SetColor( Console::Color::ForeGround, 255, 60, 60 );
-        Console::Write( "Failed" );
-        Console::ResetColor();
-        std::cerr << " test \"" << titleCStr << "\"" << "\n";
+        Console->Fore->rgb( 255, 60, 60 )
+            ->Write( "Failed" )
+            ->ResetColor()
+            ->Write( " test \"" )
+            ->Fore->rgb( 0, 255, 200 )
+            ->Write( titleCStr )
+            ->ResetColor()
+            ->WriteLine( "\"" );
         Tests::Fails++;
         return false;
     }
-
-    bool Register( asIScriptEngine* engine )
-    {
-        engine->SetDefaultNamespace( "Tests" );
-
-        REGISTER_GLOBAL_PROPERTY("int Passes", &::Tests::Passes, "Number of passed test assertions.");
-        REGISTER_GLOBAL_PROPERTY("int Fails", &::Tests::Fails, "Number of failed test assertions.");
-        REGISTER_GLOBAL_FUNCTION("bool Expect( const string&in title, bool expected, bool condition )", asFUNCTION(&::Tests::Expect), asCALL_CDECL, "Tests an assertion condition and increments pass/fail counters." );
-
-        engine->SetDefaultNamespace( "" );
-
-        return true;
-    }
 }
-#include <mutex>
+
+class CASDocTests : public CASDocRegistry
+{
+    bool Register() override
+    {
+        return
+        SetDefaultNamespace( "Tests" ) &&
+        RegisterGlobalProperty(
+            "Number of passed test assertions."sv,
+            "int Passes",
+            &::Tests::Passes
+        ) &&
+        RegisterGlobalProperty(
+            "Number of failed test assertions."sv,
+            "int Fails",
+            &::Tests::Passes
+        ) &&
+        RegisterGlobalFunction(
+            "Tests an assertion condition and increments pass/fail counters if expect is not equal to condition.",
+            "bool Expect( const string&in title, bool expected, bool condition )",
+            asFUNCTION(&::Tests::Expect),
+            asCALL_CDECL
+        ) && 
+        SetDefaultNamespace( "" );
+    }
+};
+
+CASDocRegisterInterface(CASDocTests);
 
 struct CustomConsoleReporter : public doctest::IReporter
 {
@@ -91,35 +115,30 @@ struct CustomConsoleReporter : public doctest::IReporter
     }
     void subcase_start(const doctest::SubcaseSignature& in) override
     {
-        Console::SetColor( Console::Color::BackGround, 50, 50, 50 );
-        Console::SetColor( Console::Color::ForeGround, 200, 200, 50 );
+        Console->Back->rgb( 50, 50, 50 )
+            ->Fore->rgb( 200, 200, 50 );
 
         std::string lines = "================================";
         for( size_t i = 0; i < in.m_name.size(); i++ )
             lines += "=";
 
-        Console::WriteLine( lines );
-        Console::Write( "> Running Script AngelScript: " );
-        Console::Write( in.m_name.c_str() );
-        Console::WriteLine( " <" );
-        Console::WriteLine( lines );
-        Console::ResetColor();
+        Console->WriteLine( lines );
+        Console->Write( "> Running Script AngelScript: " );
+        Console->Write( in.m_name.c_str() );
+        Console->WriteLine( " <" );
+        Console->WriteLine( lines );
+        Console->ResetColor();
     }
     void test_run_end(const doctest::TestRunStats& stats) override
     {
         std::lock_guard<std::mutex> lock(mutex);
 
-        #define _reset() \
-            Console::SetColor( Console::Color::BackGround, 50, 50, 50 ); \
-            Console::SetColor( Console::Color::ForeGround, 200, 200, 50 )
-        #define _cover( text, r, g, b ) \
-            Console::SetColor( Console::Color::ForeGround, r, g, b ); \
-            std::cout << text; \
-            _reset()
+        #define _reset() Console->Back->rgb( 50, 50, 50 )->Fore->rgb( 200, 200, 50 )
+        #define _cover( text, r, g, b ) Console->Fore->rgb(r, g, b )->Write(text); _reset()
 
         _reset();
 
-        Console::WriteLine( "===============================================================================" );
+        Console->WriteLine( "===============================================================================" );
 
         if( Tests::TotalFails > 0 )
         {
@@ -127,7 +146,7 @@ struct CustomConsoleReporter : public doctest::IReporter
             _cover( "Failed", 255, 50, 50 );
             std::cout << ": ";
             _cover( Tests::TotalFails, 255, 50, 50 );
-            Console::WriteLine( " tests" );
+            Console->WriteLine( " tests" );
         }
 
         if( Tests::TotalPasses > 0 )
@@ -136,7 +155,7 @@ struct CustomConsoleReporter : public doctest::IReporter
             _cover( "Passed", 50, 255, 50 );
             std::cout << ": ";
             _cover( Tests::TotalPasses, 50, 255, 50 );
-            Console::WriteLine( " tests" );
+            Console->WriteLine( " tests" );
         }
 
         if( stats.numTestCasesFailed > 0 )
@@ -145,7 +164,7 @@ struct CustomConsoleReporter : public doctest::IReporter
             _cover( "Failed", 255, 50, 50 );
             std::cout << ": ";
             _cover( stats.numTestCasesFailed, 255, 50, 50 );
-            Console::WriteLine( " asserts" );
+            Console->WriteLine( " asserts" );
         }
 
         if( ( stats.numAsserts - stats.numAssertsFailed ) > 0 )
@@ -162,11 +181,11 @@ struct CustomConsoleReporter : public doctest::IReporter
                 _cover( stats.numAsserts, 50, 255, 50 );
             }
 
-            Console::WriteLineEmpty();
+            Console->WriteLine();
         }
 
-        Console::WriteLine( "===============================================================================" );
-        Console::ResetColor();
+        Console->WriteLine( "===============================================================================" );
+        Console->ResetColor();
     }
 };
 
@@ -224,7 +243,6 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     {
         engine->SetMessageCallback(asFUNCTION(MessageCallback), nullptr, asCALL_CDECL);
         REQUIRE( AddonRegistry::RegisterAllAddons(engine) == true );
-        REQUIRE( Tests::Register(engine) == true );
 
         for( const auto& filePath : testFiles )
         {
@@ -241,39 +259,37 @@ TEST_CASE( "AngelScript Test Directory Runner" )
     }
     else
     {
-        Console::SetColor( Console::Color::ForeGround, 255, 60, 60 );
-        Console::Write( "No test scripts found in \"" );
-        Console::Write( fs::current_path().string() );
-        Console::WriteLine( "\"" );
+        Console->Fore->rgb( 255, 60, 60 )
+            ->Write( "No test scripts found in \"" )
+            ->Write( fs::current_path().string() )
+            ->WriteLine( "\"" );
         Tests::TotalFails++;
-        Console::ResetColor();
+        Console->ResetColor();
     }
 
-    Console::SetColor( Console::Color::BackGround, 100, 100, 255 );
-    Console::Write( ">" );
-    Console::ResetColor();
+    Console->Back->rgb( 100, 100, 255 )
+        ->Write( ">" )
+        ->ResetColor();
 
     if( Tests::Fails > 0 )
     {
-        Console::SetColor( Console::Color::ForeGround, 255, 60, 60 );
+        Console->Fore->rgb( 255, 60, 60 );
         std::cerr << " " << Tests::Fails << " tests failed out of " << (Tests::Fails + Tests::Passes);
-        Console::WriteLineEmpty();
-        Console::ResetColor();
+        Console->WriteLine()
+            ->ResetColor();
     }
     else if( Tests::Passes > 0 )
     {
-        Console::SetColor( Console::Color::ForeGround, 60, 255, 60 );
+        Console->Fore->rgb( 60, 255, 60 );
         std::cout << " " << Tests::Passes << " tests passed";
-        Console::WriteLineEmpty();
-        Console::ResetColor();
+        Console->WriteLine()
+            ->ResetColor();
     }
 
     Tests::TotalFails += Tests::Fails;
     Tests::Fails = 0;
     Tests::TotalPasses += Tests::Passes;
     Tests::Passes = 0;
-
-    GenerateScriptPredefined(engine, "../as.predefined");
 
     engine->ShutDownAndRelease();
 

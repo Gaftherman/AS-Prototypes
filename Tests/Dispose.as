@@ -17,10 +17,10 @@ class SomeClass
     {
         if( this.name != "" )
         {
-            Console::SetColor( Console::Color::BackGround, 50, 50, 50 );
-            Console::SetColor( Console::Color::ForeGround, 200, 200, 50 );
-            Console::WriteLine( this.name + " destroyed." );
-            Console::ResetColor();
+            Console.Back.rgb( 50, 50, 50 )
+                .Fore.rgb( 200, 200, 50 )
+                .WriteLine( this.name + " destroyed." )
+            .ResetColor();
         }
     }
 }

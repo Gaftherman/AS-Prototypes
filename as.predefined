@@ -195,19 +195,6 @@ class ref
     bool opEquals(const ref&in) const;
     bool opEquals(const ?&in) const;
 }
-class optional<T>
-{
-    /// Returns true if the optional contains a value, false otherwise.
-    bool has_value() const;
-    /// Clears the contained value and resets the optional to an empty state.
-    void clear();
-    /// Returns a reference to the contained value. Throws a script exception if empty.
-    const T& value() const;
-    /// Sets the value contained in the optional.
-    void set(const T&in value);
-    /// Assigns a new value to the optional container.
-    optional<T>& opAssign(const T&in value);
-}
 /// Addon: ASJSON
 /// JSON value container supporting null, boolean, number, string, array, and object types.
 class JSON
@@ -238,6 +225,43 @@ class JSON
     bool is_structured() const;
     /// Defines how should json handle errors.
     json::error_handler m_ErrorHandlerMode;
+}
+class optional<T>
+{
+    /// Returns true if the optional contains a value, false otherwise.
+    bool has_value() const;
+    /// Clears the contained value and resets the optional to an empty state.
+    void clear();
+    /// Returns a reference to the contained value. Throws a script exception if empty.
+    const T& value() const;
+    /// Sets the value contained in the optional.
+    void set(const T&in value);
+    /// Assigns a new value to the optional container.
+    optional<T>& opAssign(const T&in value);
+}
+/// Access the CLI console
+class console_t
+{
+    /// Print to the console output
+    console_t@ Write(const string&in msg);
+    /// Print line to the console output
+    console_t@ WriteLine(const string&in msg);
+    /// Print line to the console output
+    console_t@ WriteLine();
+    /// Reset the color.
+    console_t@ ResetColor(console_color_t@ target = null);
+    /// Reset the color.
+    console_color_t@ Fore;
+    /// Reset the color.
+    console_color_t@ Back;
+}
+/// Console text & background color.
+class console_color_t
+{
+    /// Reset the color to default.
+    console_t@ Reset();
+    /// Set the color to Red, Green and Blue.
+    console_t@ rgb(int red, int green, int blue);
 }
 uint scan(const string&in str, ?&out...);
 string format(const string&in fmt, const ?&in...);
@@ -273,34 +297,8 @@ float abs(float);
 float floor(float);
 float fraction(float);
 bool Dispose(?&in);
-/// Addon: Console
-namespace Console
-{
-    /// Console color.
-    enum Color
-    {
-        /// Console text color.
-        ForeGround,
-        /// Console background color.
-        BackGround,
-        /// Both console text and background colors.
-        Both
-    }
-    /// Print to the console.
-    void Write(const string&in msg);
-    /// Print line to the console.
-    void WriteLine(const string&in msg);
-    /// Print line to the console.
-    void WriteLine();
-    /// Set the console color code based on the given RGB values.
-    void SetColor(Color target, int red, int green, int blue);
-    /// Reset the console color code.
-    void ResetColor(Color target = Color::Both);
-    /// Represents the text color in the console output.
-    string ForegroundColor;
-    /// Represents the background color in the console output.
-    string BackgroundColor;
-}
+/// Access the CLI console
+console_t@ Console;
 /// Addon: ASException
 namespace Exception
 {
@@ -323,10 +321,9 @@ namespace Exception
     /// Get a handle to the dictionary data if the exception provided one when raised.
     dictionary@ Dictionary();
 }
-/// Addon: Tests
 namespace Tests
 {
-    /// Tests an assertion condition and increments pass/fail counters.
+    /// Tests an assertion condition and increments pass/fail counters if expect is not equal to condition.
     bool Expect(const string&in title, bool expected, bool condition);
     /// Number of passed test assertions.
     int Passes;

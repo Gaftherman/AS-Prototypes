@@ -6,6 +6,7 @@
                 "${workspaceFolder}/**"
             ],
             "defines": [
+                "ASCONSOLE"
             ],
             "windowsSdkVersion": "10.0.19041.0",
             "compilerPath": "cl.exe",

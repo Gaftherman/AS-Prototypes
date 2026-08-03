@@ -53,17 +53,6 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     // 9. Script Handles
     RegisterScriptHandle(engine);
 
-#ifndef NDEBUG
-    CASDocRegistry::Verbose = true;
-    CASDocRegistry::GenerateDocumentation = true;
-    CASDocRegistry::GeneratePredefined = true;
-#endif
-
-    CASDocRegistry::Engine = engine;
-    CASDocRegistry::RegisterInterfaces();
-
-    Console::Register( engine );
-
     ASException::Register( engine );
     ASDispose::Register( engine );
 
@@ -92,6 +81,18 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
             return false;
         };
     }
+
+#ifndef NDEBUG
+    static bool FirstTime = true; // Geneate these stuff only once and assume it's ok
+    CASDocRegistry::Verbose = FirstTime;
+    CASDocRegistry::GenerateDocumentation = FirstTime;
+    CASDocRegistry::GeneratePredefined = FirstTime;
+    FirstTime = false;
+#endif
+
+    CASDocRegistry::Engine = engine;
+    CASDocRegistry::RegisterInterfaces();
+
     return true;
 }
 

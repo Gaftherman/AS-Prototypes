@@ -12,6 +12,10 @@ using namespace std::string_view_literals;
 // GeneratePredefined
 #include "as_predefined.h"
 
+#if ASCONSOLE
+#include "addons/Console.hpp"
+#endif
+
 class CASDocRegistry;
 
 inline std::vector<CASDocRegistry*> g_ASRegistry;
@@ -56,19 +60,126 @@ public:
 
     const char* GetName() { return Name.c_str(); }
 
-    static bool RegisterObjectType( const char* obj, int byteSize, asDWORD flags )
-    {
-        int r = Engine->RegisterObjectType( obj, byteSize, flags );
+#if ASCONSOLE
+#define PRINT_REG( obj, res ) if(Verbose){Console->Write( "Registering: \"" )->Fore->rgb(0,255,0)->Write(obj)->Fore->Reset() \
+->Write( "\" asERetCodes: " )->Fore->rgb( res >= 0 ? 0 : 255, res >= 0 ? 255 : 0, 0 )->Write( res )->Fore->Reset()->WriteLine();}
+#define PRINT_DOC( docString ) if(Verbose && !docString.empty()){Console->Write("Documentation: ")->Back->rgb(50,50,50)->Fore->rgb(135, 135, 1)->Write(docString)->ResetColor()->WriteLine();}
+#else
+#define PRINT_REG( obj, res ) std::cout << "Registering: \"" << obj << "\" asERetCodes: " << res << std::endl;
+#define PRINT_DOC( docString ) if(Verbose && !docString.empty()){ std::cout << "Documentation: " << docString << std::endl;}
+#endif
 
-        if( Verbose )
+// Generate docstring for "declaration" and call "method" for asIScriptEngine. does assertion check, prints messages and returns true/false if no assertion.
+#define APIREG( declaration, method ) \
+{ \
+    int r = Engine->method; \
+    PRINT_REG( declaration, r ) \
+    assert( r >= 0 ); \
+    return ( r >= 0 ); \
+}
+
+    static bool SetDefaultNamespace( const char* nameSpace )
+    APIREG( nameSpace, SetDefaultNamespace( nameSpace ) )
+
+    bool SetDefaultNamespace( std::string_view docString, const char* nameSpace )
+    {
+        int r = SetDefaultNamespace( nameSpace );
+
+        if( GeneratePredefined )
         {
-            std::cout << "Registering \"" << obj << "\" asERetCodes: " << r << std::endl;;
+            std::string comment( docString );
+
+            PRINT_DOC(docString);
+
+            // -TODO Set a namespace and all the methods registered later will fill into it until namespace changed.
         }
 
-        assert( r >= 0 );
+        assert( !docString.empty() );
 
         return ( r >= 0 );
     }
+
+    static bool RegisterObjectProperty( const char* obj, const char* declaration, int byteOffset )
+    APIREG( declaration, RegisterObjectProperty( obj, declaration, byteOffset ) )
+
+    bool RegisterObjectProperty( std::string_view docString, const char* obj, const char* declaration, int byteOffset )
+    {
+        int r = RegisterObjectProperty( obj, declaration, byteOffset );
+
+        if( GeneratePredefined )
+        {
+            std::string comment( docString );
+
+            PRINT_DOC(docString);
+
+            asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
+
+            if( type != nullptr )
+            {
+                std::string declStr(declaration);
+                size_t spacePos = declStr.rfind(' ');
+                std::string propName = (spacePos != std::string::npos) ? declStr.substr(spacePos + 1) : declStr;
+                ASDoc::RegisterPropertyComment(type, propName, comment, this->GetName() );
+            }
+        }
+
+        assert( !docString.empty() );
+
+        return ( r >= 0 );
+    }
+
+    static bool RegisterGlobalProperty( const char* declaration, void* pointer )
+    APIREG( declaration, RegisterGlobalProperty( declaration, pointer ) )
+
+    bool RegisterGlobalProperty( std::string_view docString, const char* declaration, void* pointer )
+    {
+        int r = RegisterGlobalProperty( declaration, pointer );
+
+        if( GeneratePredefined )
+        {
+            std::string comment( docString );
+
+            PRINT_DOC(docString);
+
+            std::string declStr( declaration );
+            size_t spacePos = declStr.rfind(' ');
+            std::string propName = ( spacePos != std::string::npos ) ? declStr.substr( spacePos + 1 ) : declStr;
+            ASDoc::RegisterGlobalPropertyComment( propName, comment, this->GetName() );
+        }
+
+        assert( !docString.empty() );
+
+        return ( r >= 0 );
+    }
+
+    static bool RegisterGlobalFunction( const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv )
+    APIREG( declaration, RegisterGlobalFunction( declaration, funcPointer, callConv ) )
+
+    bool RegisterGlobalFunction( std::string_view docString, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv )
+    {
+        int r = RegisterGlobalFunction( declaration, funcPointer, callConv );
+
+        if( GeneratePredefined )
+        {
+            std::string comment( docString );
+
+            PRINT_DOC(docString);
+
+            asIScriptFunction* func = Engine->GetGlobalFunctionByDecl( declaration );
+
+            if( func )
+            {
+                ASDoc::RegisterFunctionComment(func, comment, this->GetName() );
+            }
+        }
+
+        assert( !docString.empty() );
+
+        return ( r >= 0 );
+    }
+
+    static bool RegisterObjectType( const char* obj, int byteSize, asDWORD flags )
+    APIREG( obj, RegisterObjectType( obj, byteSize, flags ) )
 
     bool RegisterObjectType( std::string_view docString, const char* obj, int byteSize, asDWORD flags )
     {
@@ -78,10 +189,7 @@ public:
         {
             std::string comment( docString );
 
-            if( Verbose )
-            {
-                std::cout << "Documentation: " << docString << std::endl;
-            }
+            PRINT_DOC(docString);
 
             ASDoc::RegisterObjectTypeComment( obj, comment, this->GetName() );
         }
@@ -92,18 +200,7 @@ public:
     }
 
     static bool RegisterObjectBehaviour( const char* obj, asEBehaviours behaviour, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv )
-    {
-        int r = Engine->RegisterObjectBehaviour( obj, behaviour, declaration, funcPointer, callConv );
-
-        if( Verbose )
-        {
-            std::cout << "Registering \"" << obj << "::" << declaration << "\" asERetCodes: " << r << std::endl;
-        }
-
-        assert( r >= 0 );
-
-        return ( r >= 0 );
-    }
+    APIREG( obj, RegisterObjectBehaviour( obj, behaviour, declaration, funcPointer, callConv ) )
 
     bool RegisterObjectBehaviour( std::string_view docString, const char* obj, asEBehaviours behaviour, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv )
     {
@@ -113,10 +210,7 @@ public:
         {
             std::string comment( docString );
 
-            if( Verbose )
-            {
-                std::cout << "Documentation: " << comment << std::endl;;
-            }
+            PRINT_DOC(docString);
 
             asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
             asIScriptFunction* func = Engine->GetFunctionById(r);
@@ -135,18 +229,7 @@ public:
     }
 
     static bool RegisterObjectMethod( const char* obj, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv )
-    {
-        int r = Engine->RegisterObjectMethod( obj, declaration, funcPointer, callConv );
-
-        if( Verbose )
-        {
-            std::cout << "Registering \"" << obj << "::" << declaration << "\" asERetCodes: " << r << std::endl;
-        }
-
-        assert( r >= 0 );
-
-        return ( r >= 0 );
-    }
+    APIREG( obj, RegisterObjectMethod( obj, declaration, funcPointer, callConv ) )
 
     bool RegisterObjectMethod( std::string_view docString, const char* obj, const char* declaration, const asSFuncPtr& funcPointer, asDWORD callConv )
     {
@@ -156,10 +239,7 @@ public:
         {
             std::string comment( docString );
 
-            if( Verbose )
-            {
-                std::cout << "Documentation: " << comment << std::endl;;
-            }
+            PRINT_DOC(docString);
 
             asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
             asIScriptFunction* func = type ? type->GetMethodByDecl(declaration) : nullptr;
@@ -220,6 +300,21 @@ public:
             else if( passes > 0 )
             {
                 std::cout << "All " << passes << " addons has been registered" << std::endl;
+            }
+        }
+
+        if( fails == 0 )
+        {
+            if( GeneratePredefined )
+            {
+#ifndef NDEBUG
+                GenerateScriptPredefined( Engine, "../as.predefined" );
+#else
+                GenerateScriptPredefined( Engine, "as.predefined" );
+#endif
+            }
+            if( GenerateDocumentation )
+            {
             }
         }
 
