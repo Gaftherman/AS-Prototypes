@@ -54,7 +54,10 @@ namespace Tests
             ->Fore->rgb( 0, 255, 200 )
             ->Write( titleCStr )
             ->ResetColor()
-            ->WriteLine( "\"" );
+            ->WriteLine( "\"" )
+            ->Fore->rgb( 255, 60, 60 )
+            ->WriteLine( "------" )
+        ->ResetColor();
         Tests::Fails++;
         return false;
     }
@@ -262,28 +265,33 @@ TEST_CASE( "AngelScript Test Directory Runner" )
         Console->Fore->rgb( 255, 60, 60 )
             ->Write( "No test scripts found in \"" )
             ->Write( fs::current_path().string() )
-            ->WriteLine( "\"" );
+            ->WriteLine( "\"" )
+        ->ResetColor();
+
         Tests::TotalFails++;
-        Console->ResetColor();
     }
 
     Console->Back->rgb( 100, 100, 255 )
         ->Write( ">" )
-        ->ResetColor();
+    ->ResetColor();
 
     if( Tests::Fails > 0 )
     {
-        Console->Fore->rgb( 255, 60, 60 );
-        std::cerr << " " << Tests::Fails << " tests failed out of " << (Tests::Fails + Tests::Passes);
-        Console->WriteLine()
-            ->ResetColor();
+        Console->Fore->rgb( 255, 60, 60 )
+            ->Write( " " )
+            ->Write( Tests::Fails )
+            ->Write( " tests failed out of " )
+            ->Fore->rgb( 60, 255, 60 )
+            ->WriteLine( ( Tests::Fails + Tests::Passes ) )
+        ->ResetColor();
     }
     else if( Tests::Passes > 0 )
     {
-        Console->Fore->rgb( 60, 255, 60 );
-        std::cout << " " << Tests::Passes << " tests passed";
-        Console->WriteLine()
-            ->ResetColor();
+        Console->Fore->rgb( 60, 255, 60 )
+            ->Write( " " )
+            ->Write( Tests::Passes )
+            ->WriteLine( " tests passed" )
+        ->ResetColor();
     }
 
     Tests::TotalFails += Tests::Fails;
