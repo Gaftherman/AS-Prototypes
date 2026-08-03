@@ -195,6 +195,34 @@ class ref
     bool opEquals(const ref&in) const;
     bool opEquals(const ?&in) const;
 }
+class weakref<T>
+{
+    ~weakref();
+    weakref(int&in);
+    weakref(int&in, T@);
+    T@ opImplCast();
+    T@ get() const;
+    weakref<T>& opHndlAssign(const weakref<T>&in);
+    weakref<T>& opAssign(const weakref<T>&in);
+    bool opEquals(const weakref<T>&in) const;
+    weakref<T>& opHndlAssign(T@);
+    bool opEquals(const T@) const;
+}
+class const_weakref<T>
+{
+    ~const_weakref();
+    const_weakref(int&in);
+    const_weakref(int&in, const T@);
+    const T@ opImplCast() const;
+    const T@ get() const;
+    const_weakref<T>& opHndlAssign(const const_weakref<T>&in);
+    const_weakref<T>& opAssign(const const_weakref<T>&in);
+    bool opEquals(const const_weakref<T>&in) const;
+    const_weakref<T>& opHndlAssign(const T@);
+    bool opEquals(const T@) const;
+    const_weakref<T>& opHndlAssign(const weakref<T>&in);
+    bool opEquals(const weakref<T>&in) const;
+}
 /// Addon: ASJSON
 /// JSON value container supporting null, boolean, number, string, array, and object types.
 class JSON
@@ -238,6 +266,10 @@ class optional<T>
     void set(const T&in value);
     /// Assigns a new value to the optional container.
     optional<T>& opAssign(const T&in value);
+    /// Sets the value contained in the optional.
+    void set(const nullopt_t@ value);
+    /// Assigns a new value to the optional container.
+    optional<T>& opAssign(const nullopt_t@ value);
 }
 /// Generic empty property for using with optional<T>
 class nullopt_t

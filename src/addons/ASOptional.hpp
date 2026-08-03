@@ -27,9 +27,6 @@ private:
     }
 
 public:
-    class ASNullOptional
-    {
-    };
 
     ASOptional( asITypeInfo* tinfo ) : typeInfo(tinfo), valueBuffer(nullptr), refCount(1)
     {
@@ -174,11 +171,6 @@ public:
         }
     }
 
-    static ASOptional* FactoryNullOptional( asITypeInfo* typeInfo, ASNullOptional* )
-    {
-        return new ASOptional(typeInfo);
-    }
-
     static ASOptional* Factory( asITypeInfo* typeInfo )
     {
         return new ASOptional( typeInfo );
@@ -260,4 +252,19 @@ public:
     {
         return opt ? opt->GetValuePointer() : nullptr;
     }
+
+    class ASNullOptional
+    {
+        public:
+            static ASOptional* Factory( asITypeInfo* typeInfo, ASNullOptional* )
+            {
+                return new ASOptional(typeInfo);
+            }
+
+            static void Clear( ASOptional* opt, ASNullOptional* )
+            {
+                if( opt )
+                    opt->Clear();
+            }
+    };
 };

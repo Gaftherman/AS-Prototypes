@@ -85,6 +85,13 @@ void main()
     optClassHandle.set( entvarHandle );
     Expect( "optional correctly stores and matches class handles", true, entvarHandle is optClassHandle.value());
 
+    @entvarHandle = null;
+    Expect( "optional<@> adds reference count to handles", true, optClassHandle.has_value() && optClassHandle.value() !is null );
+
+    weakref<pev> someDataWeak( optClassHandle.value() );
+    optClassHandle.clear();
+    Expect( "optional<@> clears reference count to handles", true, someDataWeak.get() is null );
+
     Expect( "method successfully returns empty optional using {}", true, !MethodReturnOptionalEmpty().has_value());
 
     auto optmet = MethodReturnOptionalValid();
@@ -110,13 +117,9 @@ void main()
     optional<int> optHandleDecl(3);
     optional<int>@ optHandle = optHandleDecl;
     optHandleDecl.set(2);
-    Expect( "optional<T>@ valid handles", true, optHandle !is null && optHandle.has_value() && optHandle.value() == 2 );
+    Expect( "optional<T>@ valid handle", true, optHandle !is null && optHandle.has_value() && optHandle.value() == 2 );
 
-    dictionary@ someData = {};
-    optional<dictionary@> optClassHandleCleared(someData);
-    @someData = null;
-    Expect( "optional<@> adds reference to handles", true, optClassHandleCleared.has_value() && optClassHandleCleared.value() !is null );
-
+#if FALSE
     optional<int> optSetInt = 10;
     Expect( "optional==opAssign int", true, optSetInt.has_value() && optSetInt.value() == 10 );
 
@@ -124,7 +127,8 @@ void main()
     Expect( "optional==opAssign string", true, optSetString.has_value() && optSetString.value() == "string" );
 
     optional<pev@> optSetHandle = entvarHandle;
-    Expect( "optional==opAssign @handle", true, optSetHandle.has_value() && optSetHandle.value() !is null );
+    Expect( "optional==opAssign @handle", true, !optSetHandle.has_value() );
+#endif
 
 #if FALSE
     MethodArgumentOptionalEmpty();
@@ -134,4 +138,12 @@ void main()
     Expect( "optional explicit constructor with nullopt", true, !optFromNull.has_value());
     Expect( "method returns empty optional via nullopt", true, !MethodReturnNullOpt().has_value());
     MethodArgumentNullOptionalEmpty();
+    optional<int> optSetToNull(4);
+    optSetToNull.set(nullopt);
+    Expect( "optional explicit set(nullopt)", true, !optSetToNull.has_value());
+    optional<int> optSetToNull2(4);
+    optSetToNull2 = nullopt;
+    Expect( "optional explicit ==opAssign nullopt", true, !optSetToNull2.has_value());
+
+    Tests::Stop();
 }

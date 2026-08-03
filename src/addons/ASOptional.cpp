@@ -117,8 +117,22 @@ class CASDocOptional : public CASDocRegistry
             OPTIONAL_NAME "<T>",
             asBEHAVE_FACTORY,
             OPTIONAL_NAME "<T>@ f(int &in, const " OPTIONAL_NULLOPT_NAME "@ value)",
-            asFUNCTIONPR( ASOptional::FactoryNullOptional, ( asITypeInfo*, ASOptional::ASNullOptional* ), ASOptional* ),
+            asFUNCTIONPR( ASOptional::ASNullOptional::Factory, ( asITypeInfo*, ASOptional::ASNullOptional* ), ASOptional* ),
             asCALL_CDECL
+        ) &&
+        RegisterObjectMethod(
+            "Sets the value contained in the " OPTIONAL_NAME "."sv,
+            OPTIONAL_NAME "<T>",
+            "void set( const " OPTIONAL_NULLOPT_NAME "@ value )",
+            asFUNCTIONPR( ASOptional::ASNullOptional::Clear, ( ASOptional*, ASOptional::ASNullOptional* ), void ),
+            asCALL_CDECL_OBJFIRST
+        ) &&
+        RegisterObjectMethod(
+            "Assigns a new value to the " OPTIONAL_NAME " container."sv,
+            OPTIONAL_NAME "<T>",
+            OPTIONAL_NAME "<T>& opAssign( const " OPTIONAL_NULLOPT_NAME "@ value )",
+            asFUNCTIONPR( ASOptional::ASNullOptional::Clear, ( ASOptional*, ASOptional::ASNullOptional* ), void ),
+            asCALL_CDECL_OBJFIRST
         ) &&
         RegisterGlobalProperty(
             "Generic null/empty " OPTIONAL_NAME " for " OPTIONAL_NAME "<T> operations."sv,
