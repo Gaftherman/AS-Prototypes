@@ -21,9 +21,9 @@ class CASDocOptional : public CASDocRegistry
 {
     bool Register() override
     {
-        #define OPTIONAL_NAME "optional"
-
+#if OPTIONAL_REGISTER_NULLOPT
         static ASOptional::ASNullOptional* g_nullopt = new ASOptional::ASNullOptional();
+#endif
 
         return
         RegisterObjectType(
