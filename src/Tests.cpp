@@ -61,6 +61,13 @@ namespace Tests
         Tests::Fails++;
         return false;
     }
+
+    inline bool stop = false;
+
+    inline void Stop()
+    {
+        stop = true;
+    }
 }
 
 class CASDocTests : public CASDocRegistry
@@ -80,11 +87,17 @@ class CASDocTests : public CASDocRegistry
             &::Tests::Passes
         ) &&
         RegisterGlobalFunction(
-            "Tests an assertion condition and increments pass/fail counters if expect is not equal to condition.",
+            "Tests an assertion condition and increments pass/fail counters if expect is not equal to condition."sv,
             "bool Expect( const string&in title, bool expected, bool condition )",
             asFUNCTION(&::Tests::Expect),
             asCALL_CDECL
-        ) && 
+        ) &&
+        RegisterGlobalFunction(
+            "Stops execution of tests. useful while wanting to test a specific file only."sv,
+            "void Stop()",
+            asFUNCTION(&::Tests::Stop),
+            asCALL_CDECL
+        ) &&
         SetDefaultNamespace( "" );
     }
 };
@@ -232,9 +245,9 @@ TEST_CASE( "AngelScript Test Directory Runner" )
             auto tb = fs::last_write_time( b, ec2 );
 
             if( !ec1 && !ec2 )
-                return ta < tb;
+                return ta > tb;
 
-            return a.native() < b.native();
+            return a.native() > b.native();
         } );
 
         return paths;
@@ -255,7 +268,7 @@ TEST_CASE( "AngelScript Test Directory Runner" )
             {
                 int result = ExecuteSingleScript( engine, filePathString, {} );
                 CHECK( result == 0 );
-                if( result != 0 )
+                if( result != 0 || Tests::stop )
                     break;
             }
         }

@@ -325,6 +325,8 @@ namespace Tests
 {
     /// Tests an assertion condition and increments pass/fail counters if expect is not equal to condition.
     bool Expect(const string&in title, bool expected, bool condition);
+    /// Stops execution of tests. useful while wanting to test a specific file only.
+    void Stop();
     /// Number of passed test assertions.
     int Passes;
     /// Number of failed test assertions.
