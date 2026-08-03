@@ -7,90 +7,108 @@ void main()
     title( "JSON class & methods" );
 
     JSON@ validObject = json::loads( "{\"this is a valid key\":\"in a valid object\"}" );
-    Expect( "json::loads valid", true, validObject !is null );
+    Expect( "json::loads parses valid json object format", true, validObject !is null );
+
+    if ( validObject !is null )
+    {
+        Expect( "Parsed json detects as structured object", true, validObject.is_object() );
+        Expect( "Parsed json confirms as structured container", true, validObject.is_structured() );
+        Expect( "Parsed json !is primitive", false, validObject.is_primitive() );
+    }
 
     @validObject = json::load( "json/load.json" );
-    Expect( "json::load valid", true, validObject !is null && validObject.to_string() == "[\"load\"]" );
+    bool isLoadValid = ( validObject !is null && validObject.to_string() == "[\"load\"]" );
+    Expect( "json::load reads and parses explicit disk file path", true, isLoadValid );
 
     string deserialized = json::dumps( validObject );
-    Expect( "json::dumps valid", true, deserialized == "[\"load\"]" );
-//    Console.WriteLine( "Serialized: " + deserialized );
+    Expect( "json::dumps serializes object back to text representation", true, deserialized == "[\"load\"]" );
 
-    Expect( "json::dump valid", true, json::dump(validObject, "json/dump.json" ) && ( @validObject = json::load( "json/dump.json" ) ) !is null && validObject.to_string() == "[\"load\"]" );
+    bool dumpSuccess = json::dump( validObject, "json/dump.json" );
+    Expect( "json::dump writes structured content to disk", true, dumpSuccess );
 
-    bool result = true;
+    JSON@ verifiedDumpObj = json::load( "json/dump.json" );
+    bool isDumpVerified = ( verifiedDumpObj !is null && verifiedDumpObj.to_string() == "[\"load\"]" );
+    Expect( "json::load successfully reads back the dumped serialization", true, isDumpVerified );
 
-    try {
+    bool catchTriggered = false;
+    try 
+    {
         json::dumps( null );
-        result = false;
-    } catch {
-        result = true;
+    } 
+    catch
+    {
+        catchTriggered = true;
     }
-    Expect( "json::dumps with null JSON@", true, result );
+    Expect( "json::dumps throws a script exception when receiving a null handle", true, catchTriggered );
 
-    Expect( "json AS handle instantiation", true, @JSON() !is null );
+    catchTriggered = false;
+    try 
+    {
+        json::loads( "{\"invalid\":value}" );
+    } 
+    catch
+    {
+        catchTriggered = true;
+    }
+    Expect( "json::loads throws an exception on invalid syntax structural tokens", true, catchTriggered );
+
+    Expect( "JSON instantiation via explicit handle instantiation factory", true, @JSON() !is null );
 
     JSON jsn;
-    Expect( "json AS static instantiation", true, @jsn !is null );
-
-    try {
-        json::loads( "{\"invalid\":value}" );
-        result = false;
-    } catch {
-        result = true;
-    }
-    Expect( "json::loads with errors", true, result );
-
-#if FALSE
-    // -TODO Set some invalid characters
-    JSON@ objInvalidCharacter = json::loads( "{\"a\":\"ñ\"}" );
-
-    try {
-        json::dumps( objInvalidCharacter ); // strict by default. ññññññ
-        result = false;
-    } catch {
-        result = true;
-    }
-    Expect( "json::dumps with strict mode", true, result );
-    Expect( "json::dumps with replace mode", true, json::dumps( objInvalidCharacter, json::error_handler::replace ) != "" );
-    Expect( "json::dumps with ignore mode", true, json::dumps( objInvalidCharacter, json::error_handler::ignore ) != "" );
-#endif
+    Expect( "JSON instantiation via static default stack construct", true, @jsn !is null );
 
     JSON@ obj = JSON();
-    Expect( "JSON::to_string() const", true, obj.to_string() == "null" );
-    Expect( "JSON::to_string() (null internal json)", true, JSON().to_string() == "null" );
+    Expect( "Default constructor serializes to null json string equivalent", true, obj.to_string() == "null" );
+    Expect( "Default instantiated object is recognized as json null type", true, obj.is_null() );
+    Expect( "Default instantiated object is recognized as primitive", true, obj.is_primitive() );
+
     @obj = json::loads( "[1]" );
-    Expect( "JSON::to_string() valid", true, obj.to_string() == "[1]" );
+    Expect( "JSON::to_string() matches explicit array notation text after load", true, obj.to_string() == "[1]" );
+    Expect( "JSON::is_array() evaluates true for array constructs", true, obj.is_array() );
 
-    Expect( "JSON::m_ErrorHandlerMode default to strict", true, obj.m_ErrorHandlerMode == json::error_handler::strict );
+    Expect( "JSON::m_ErrorHandlerMode initializes to strict strategy by default", true, obj.m_ErrorHandlerMode == json::error_handler::strict );
 
-    Expect( "JSON::JSON( float )", true, @JSON(1.0f) !is null );
-    Expect( "JSON::JSON( int )", true, @JSON(1) !is null );
-    Expect( "JSON::JSON( bool )", true, @JSON(true) !is null );
-    Expect( "JSON::JSON( string )", true, @JSON("empty") !is null );
-    Expect( "JSON::JSON( string, serialized )", true, @JSON("{}", true) !is null );
+    JSON@ primitiveObj = JSON( 1.0f );
+    Expect( "JSON numeric float initialization handle is valid", true, primitiveObj !is null );
+    Expect( "JSON tracks float instance as floating point precision number", true, primitiveObj.is_number_float() );
+
+    @primitiveObj = JSON( 1 );
+    Expect( "JSON numeric integer initialization handle is valid", true, primitiveObj !is null );
+    Expect( "JSON tracks int instance as standard integer number", true, primitiveObj.is_number_integer() );
+
+    @primitiveObj = JSON( true );
+    Expect( "JSON boolean initialization handle is valid", true, primitiveObj !is null );
+    Expect( "JSON tracks bool instance as conditional boolean value", true, primitiveObj.is_boolean() );
+
+    @primitiveObj = JSON( "empty" );
+    Expect( "JSON explicit string constructor allocation handle is valid", true, primitiveObj !is null );
+    Expect( "JSON tracks standard string data as text value type", true, primitiveObj.is_string() );
+
+    @primitiveObj = JSON( "{}", true );
+    Expect( "JSON implicit inline initialization constructor with override flag", true, primitiveObj !is null );
 
     array<int> arrint = { -1 };
-    @obj = JSON(arrint);
-    Expect( "JSON::JSON( array<int> )", true, obj !is null && obj.to_string() == "[-1]" );
+    @obj = JSON( arrint );
+    Expect( "JSON serialization array<int> converts to valid string representation", true, obj !is null && obj.to_string() == "[-1]" );
+    Expect( "JSON collection correctly flagged as array type", true, obj.is_array() );
 
     array<uint> arruint = { 1 };
-    @obj = JSON(arruint);
-    Expect( "JSON::JSON( array<uint> )", true, obj !is null && obj.to_string() == "[1]" );
+    @obj = JSON( arruint );
+    Expect( "JSON serialization array<uint> handles unsigned formatting correctly", true, obj !is null && obj.to_string() == "[1]" );
 
     array<bool> arrbool = { true };
-    @obj = JSON(arrbool);
-    Expect( "JSON::JSON( array<bool> )", true, obj !is null && obj.to_string() == "[true]" );
+    @obj = JSON( arrbool );
+    Expect( "JSON serialization array<bool> preserves literal structural terms", true, obj !is null && obj.to_string() == "[true]" );
 
     array<float> arrfloat = { 0.5f };
-    @obj = JSON(arrfloat);
-    Expect( "JSON::JSON( array<float> )", true, obj !is null && obj.to_string() == "[0.5]" );
+    @obj = JSON( arrfloat );
+    Expect( "JSON serialization array<float> maps decimal floating tokens clean", true, obj !is null && obj.to_string() == "[0.5]" );
 
     array<double> arrdouble = { 0.123456789012345 };
-    @obj = JSON(arrdouble);
-    Expect( "JSON::JSON( array<double> )", true, obj !is null && obj.to_string() == "[0.123456789012345]" );
+    @obj = JSON( arrdouble );
+    Expect( "JSON serialization array<double> preserves floating fractional data limits", true, obj !is null && obj.to_string() == "[0.123456789012345]" );
 
     array<string> arrstring = { "string" };
-    @obj = JSON(arrstring);
-    Expect( "JSON::JSON( array<string> )", true, obj !is null && obj.to_string() == "[\"string\"]" );
+    @obj = JSON( arrstring );
+    Expect( "JSON serialization array<string> encloses text entries inside internal syntax quotes", true, obj !is null && obj.to_string() == "[\"string\"]" );
 }
