@@ -289,4 +289,36 @@ public:
                     opt->Clear();
             }
     };
+
+    // registerNullOptional: Whatever to register a template global property "nullopt" for optional; set, opAssign and compare
+    static inline bool Register( asIScriptEngine* engine, bool registerNullOptional = true )
+    {
+        if( !engine )
+            return false;
+
+        engine->RegisterObjectType( "optional<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE );
+        engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_ADDREF, "void f()", asMETHOD( ASOptional, AddRef ), asCALL_THISCALL );
+        engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_RELEASE, "void f()", asMETHOD( ASOptional, Release ), asCALL_THISCALL );
+        engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f( int &in )", asFUNCTIONPR( ASOptional::Factory, ( asITypeInfo* ), ASOptional* ), asCALL_CDECL );
+        engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_LIST_FACTORY, "optional<T>@ f(int &in, const T &in value) { repeat T }", asFUNCTIONPR( ASOptional::FactoryGeneric, ( asITypeInfo*, void* ), ASOptional* ), asCALL_CDECL );
+        engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f( int &in, const T &in value )", asFUNCTIONPR( ASOptional::FactoryWithValue, ( asITypeInfo*, void* ), ASOptional* ), asCALL_CDECL );
+        engine->RegisterObjectMethod( "optional<T>", "bool has_value() const", asMETHOD( ASOptional, HasValue ), asCALL_THISCALL );
+        engine->RegisterObjectMethod( "optional<T>", "void clear()", asMETHOD( ASOptional, Clear ), asCALL_THISCALL );
+        engine->RegisterObjectMethod( "optional<T>", "const T& value() const", asFUNCTIONPR( ASOptional::GetValueWrapper, ( ASOptional* ), void* ), asCALL_CDECL_OBJFIRST );
+        engine->RegisterObjectMethod( "optional<T>", "void set(const T &in value)", asFUNCTIONPR( ASOptional::SetValueWrapper, ( ASOptional*, void* ), void ), asCALL_CDECL_OBJFIRST );
+        engine->RegisterObjectMethod( "optional<T>", "optional<T>& opAssign( const T &in value )", asFUNCTIONPR( ASOptional::AssignValueWrapper, ( ASOptional*, void* ), void ), asCALL_CDECL_OBJFIRST );
+        engine->RegisterObjectMethod( "optional<T>", "optional<T>& opAssign( const optional<T> &in other )", asFUNCTIONPR( ASOptional::AssignOptionalWrapper, ( ASOptional*, ASOptional* ), void ), asCALL_CDECL_OBJFIRST );
+
+        if( registerNullOptional )
+        {
+            static ASOptional::ASNullOptional* g_nullopt = new ASOptional::ASNullOptional();
+            engine->RegisterObjectType( "nullopt_t", 0, asOBJ_REF | asOBJ_NOCOUNT );
+            engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const nullopt_t@ value)", asFUNCTIONPR( ASOptional::ASNullOptional::Factory, ( asITypeInfo*, ASOptional::ASNullOptional* ), ASOptional* ), asCALL_CDECL );
+            engine->RegisterObjectMethod( "optional<T>", "void set( const nullopt_t@ value )", asFUNCTIONPR( ASOptional::ASNullOptional::Clear, ( ASOptional*, ASOptional::ASNullOptional* ), void ), asCALL_CDECL_OBJFIRST );
+            engine->RegisterObjectMethod( "optional<T>", "optional<T>& opAssign( const nullopt_t@ value )", asFUNCTIONPR( ASOptional::ASNullOptional::Clear, ( ASOptional*, ASOptional::ASNullOptional* ), void ), asCALL_CDECL_OBJFIRST );
+            engine->RegisterGlobalProperty( "const nullopt_t@ nullopt", &g_nullopt );
+        }
+
+        return true;
+    }
 };

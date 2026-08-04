@@ -21,8 +21,8 @@
 #include "addons/ASDispose.hpp"
 #include "addons/ASJSON.hpp"
 
-namespace AddonRegistry {
-
+namespace AddonRegistry
+{
 bool RegisterDefaultAddons( asIScriptEngine* engine )
 {
     if( !engine )
@@ -41,22 +41,35 @@ bool RegisterDefaultAddons( asIScriptEngine* engine )
 
     return true;
 }
+}
 
 #ifndef NDEBUG
 #include "addons/ASException.hpp"
-
+#include "addons/ASOptional.hpp"
+#define REG_TEST(T)r=T;if(!r){TotalFails++;}else{TotalPasses++;std::cout<<#T" propertly registers."<<std::endl;}assert(r);
+namespace Tests
+{
 void TestGenericRegistry()
 {
     asIScriptEngine* engine = asCreateScriptEngine();
 
-    RegisterDefaultAddons(engine);
+    AddonRegistry::RegisterDefaultAddons(engine);
 
-    assert( ASException::Register( engine ) );
+    extern int TotalFails;
+    extern int TotalPasses;
+    bool r;
+
+    REG_TEST( ASException::Register( engine ) );
+    REG_TEST( ASOptional::Register( engine, true ) );
 
     engine->ShutDownAndRelease();
 }
+}
+#undef REG_TEST
 #endif
 
+namespace AddonRegistry
+{
 bool RegisterAllAddons( asIScriptEngine* engine )
 {
     if( !engine )
@@ -66,7 +79,8 @@ bool RegisterAllAddons( asIScriptEngine* engine )
 
 #ifndef NDEBUG
     static bool FirstTime = true; // Generate these stuff only once and assume it's ok
-    TestGenericRegistry();
+    if( FirstTime )
+        Tests::TestGenericRegistry();
     CASDocRegistry::Verbose = FirstTime;
     CASDocRegistry::GenerateDocumentation = FirstTime;
     CASDocRegistry::GeneratePredefined = FirstTime;

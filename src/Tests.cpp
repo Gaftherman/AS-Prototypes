@@ -201,7 +201,13 @@ struct CustomConsoleReporter : public doctest::IReporter
     void log_assert(const doctest::AssertData& in) override {
         if(!in.m_failed) return;
         std::lock_guard<std::mutex> lock(mutex);
-        std::cerr << " Error: " << in.m_expr << " líne " << in.m_line << "\n";
+        Console->Back->rgb(40,00,00)
+            ->Write( " Error: ( " )
+            ->Fore->rgb(255,100,100)->Write( in.m_expr )
+            ->ResetColor( Console->Fore )
+            ->Write( " ) line " )
+            ->WriteLine( in.m_line )
+        ->ResetColor();
     }
     void subcase_start(const doctest::SubcaseSignature& in) override
     {
