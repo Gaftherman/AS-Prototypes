@@ -22,23 +22,7 @@ protected:
 public:
 
     using FILESYSTEM_CALLBACK = std::function<bool( std::filesystem::path& path, std::string& content, std::string& err )>;
-
-    /***
-     * @brief Set a callback for your own file system when json::load is called.
-     * The provided "path" is the absolute path to the file json wants to read.
-     * The provided "content" is the string buffer you need to fill with your file system.
-     * The provided "err" is the error message for the exception.
-     * The return value is whatever we should parse "content" or not.
-     */
     static inline std::optional<FILESYSTEM_CALLBACK> FILESYSTEM_LOAD_CALLBACK;
-
-    /***
-     * @brief Set a callback for your own file system when json::dump is called.
-     * The provided "path" is the absolute path to the file json wants to read.
-     * The provided "content" is the string buffer you need write with your file system.
-     * The provided "err" is the error message for the exception.
-     * The return value is whatever we should parse "content" or not.
-     */
     static inline std::optional<FILESYSTEM_CALLBACK> FILESYSTEM_DUMP_CALLBACK;
 
     enum class error_handler
@@ -255,6 +239,7 @@ public:
     {
         asIScriptContext* ctx = asGetActiveContext();
 
+        // Re-check here in case it got removed since that's a public member :/
         if( !FILESYSTEM_DUMP_CALLBACK.has_value() )
         {
             if( ctx != nullptr )
@@ -324,6 +309,7 @@ public:
     {
         asIScriptContext* ctx = asGetActiveContext();
 
+        // Re-check here in case it got removed since that's a public member :/
         if( !FILESYSTEM_LOAD_CALLBACK.has_value() )
         {
             if( ctx != nullptr )

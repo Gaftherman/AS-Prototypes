@@ -1,3 +1,8 @@
+
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
 #include "addons/ASJSON.hpp"
 #include "CASDocRegistry.hpp"
 
@@ -5,6 +10,29 @@ class CASDocJSON : public CASDocRegistry
 {
     bool Register() override
     {
+        ASJSON::FILESYSTEM_LOAD_CALLBACK = []( std::filesystem::path& path, std::string& content, std::string& err ) -> bool
+        {
+            if( std::ifstream file(path); file.is_open() )
+            {
+                std::stringstream buffer;
+                buffer << file.rdbuf();
+                content = buffer.str(); 
+                return true;
+            }
+            err = "Unexistent file";
+            return false;
+        };
+        ASJSON::FILESYSTEM_DUMP_CALLBACK = []( std::filesystem::path& path, std::string& content, std::string& err ) -> bool
+        {
+            if( std::ofstream file(path); file.is_open() )
+            {
+                file << content;
+                return true;
+            }
+            err = "File is read-only";
+            return false;
+        };
+
         return
         RegisterObjectType(
             "json value container supporting null, boolean, number, string, array, and object handles."sv,
@@ -120,12 +148,18 @@ class CASDocJSON : public CASDocRegistry
             asFUNCTION( ASJSON::loads ),
             asCALL_CDECL
         ) &&
-        RegisterGlobalFunction(
-            "Loads and parses a json file from the filesystem."sv,
-            "json@ load( const string&in filePath, bool ignore_comments = true )",
-            asFUNCTION( ASJSON::load ),
-            asCALL_CDECL
-        ) &&
+        [&]() -> bool {
+            if( ASJSON::FILESYSTEM_LOAD_CALLBACK.has_value() )
+            {
+                return RegisterGlobalFunction(
+                    "Loads and parses a json file from the filesystem."sv,
+                    "json@ load( const string&in filePath, bool ignore_comments = true )",
+                    asFUNCTION( ASJSON::load ),
+                    asCALL_CDECL
+                );
+            }
+            return true;
+        }() &&
         RegisterEnum(
             "Specifies error handling strategy during json serialization and deserialization."sv,
             "error_handler"
@@ -154,12 +188,18 @@ class CASDocJSON : public CASDocRegistry
             asFUNCTION( ASJSON::dumps ),
             asCALL_CDECL
         ) &&
-        RegisterGlobalFunction(
-            "Serializes a json object and writes it to a file."sv,
-            "bool dump( const json@ obj, const string&in filePath, int indents = -1, error_handler errors = error_handler::strict )",
-            asFUNCTION( ASJSON::dump ),
-            asCALL_CDECL
-        ) &&
+        [&]() -> bool {
+            if( ASJSON::FILESYSTEM_DUMP_CALLBACK.has_value() )
+            {
+                return RegisterGlobalFunction(
+                    "Serializes a json object and writes it to a file."sv,
+                    "bool dump( const json@ obj, const string&in filePath, int indents = -1, error_handler errors = error_handler::strict )",
+                    asFUNCTION( ASJSON::dump ),
+                    asCALL_CDECL
+                );
+            }
+            return true;
+        }() &&
         SetDefaultNamespace( "" ) &&
         RegisterObjectMethod(
             "Returns a string representation of the json object."sv,

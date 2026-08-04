@@ -12,9 +12,6 @@
 #include <datetime/datetime.h>
 #include <weakref/weakref.h>
 
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include <string>
 
 // Our add-ons prototypes
@@ -90,31 +87,6 @@ bool RegisterAllAddons( asIScriptEngine* engine )
 #endif
 
     ASDispose::Register( engine );
-
-    {
-        ASJSON::FILESYSTEM_LOAD_CALLBACK = []( std::filesystem::path& path, std::string& content, std::string& err ) -> bool
-        {
-            if( std::ifstream file(path); file.is_open() )
-            {
-                std::stringstream buffer;
-                buffer << file.rdbuf();
-                content = buffer.str(); 
-                return true;
-            }
-            err = "Unexistent file";
-            return false;
-        };
-        ASJSON::FILESYSTEM_DUMP_CALLBACK = []( std::filesystem::path& path, std::string& content, std::string& err ) -> bool
-        {
-            if( std::ofstream file(path); file.is_open() )
-            {
-                file << content;
-                return true;
-            }
-            err = "File is read-only";
-            return false;
-        };
-    }
 
     CASDocRegistry::Engine = engine;
     CASDocRegistry::RegisterInterfaces();
