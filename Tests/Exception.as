@@ -144,8 +144,6 @@ void main()
     {
         Exception::Clear();
 
-        // CORRECCIÓN CRÍTICA: Las variables nativas de salida deben consultarse 
-        // DESPUÉS de invocar Clear() para verificar que el API de C++ devuelva strings vacíos.
         string absolute, relative, fileName, methodName, nameSpace, objectName, message;
         message = Exception::Message();
         Exception::ScriptSection( absolute, relative, fileName, methodName, nameSpace, objectName );

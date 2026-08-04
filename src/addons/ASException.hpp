@@ -41,7 +41,7 @@ namespace ASException
         }
     }
 
-    void CleanUpModuleData( asIScriptModule* ctx )
+    static void CleanUpModuleData( asIScriptModule* ctx )
     {
         if( ExceptionModuleData* data = static_cast<ExceptionModuleData*>( ctx->GetUserData(1) ); data != nullptr )
         {
@@ -50,8 +50,9 @@ namespace ASException
         }
     }
 
+    static void ExceptionCallback(asIScriptContext*, void*);
     // Initialize one ExceptionModuleData per script and return a pointer to it.
-    std::optional<std::pair<ExceptionModuleData*, asIScriptContext*>> GetModuleData()
+    static std::optional<std::pair<ExceptionModuleData*, asIScriptContext*>> GetModuleData()
     {
         if( asIScriptContext* ctx = asGetActiveContext(); ctx != nullptr )
         {
@@ -61,27 +62,28 @@ namespace ASException
                 {
                     ExceptionModuleData* data = static_cast<ExceptionModuleData*>( module->GetUserData(1) );
 
-                    if( data == nullptr )
+                    if( data != nullptr )
                     {
-                        if( auto engine = ctx->GetEngine(); engine != nullptr )
-                        {
-                            data = new ExceptionModuleData();
-                            module->SetUserData( data, 1 ); 
-                            engine->SetModuleUserDataCleanupCallback( CleanUpModuleData, 1 );
-
-                            // Exception call stack callback
-                            extern void ExceptionCallback( asIScriptContext*, void* );
-                            ctx->SetExceptionCallback( asFUNCTION(ExceptionCallback), nullptr, asCALL_CDECL );
-                        }
+                        return { { data, ctx } };
                     }
-                    return { { data, ctx } };
+
+                    if( auto engine = ctx->GetEngine(); engine != nullptr )
+                    {
+                        data = new ExceptionModuleData();
+                        module->SetUserData( data, 1 ); 
+                        engine->SetModuleUserDataCleanupCallback( CleanUpModuleData, 1 );
+
+                        // Exception call stack callback
+                        ctx->SetExceptionCallback( asFUNCTION(ExceptionCallback), nullptr, asCALL_CDECL );
+                        return { { data, ctx }};
+                    }
                 }
             }
         }
         return std::nullopt;
     }
 
-    void ExceptionCallback( asIScriptContext* ctx, void* )
+    static void ExceptionCallback( asIScriptContext* ctx, void* )
     {
         if( auto moduleDataOpt = GetModuleData(); moduleDataOpt.has_value() )
         {
