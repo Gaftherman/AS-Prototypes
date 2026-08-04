@@ -25,7 +25,7 @@ namespace Tests
     inline int Fails = 0;
     inline int Passes = 0;
 
-    inline bool Expect( const CString& title, bool expected, bool condition )
+    inline bool Expect( const std::string& title, bool expected, bool condition )
     {
         const char* titleCStr = title.c_str();
 
@@ -62,7 +62,7 @@ namespace Tests
         return false;
     }
 
-    void ScriptAssert( bool condition, const CString& message )
+    void ScriptAssert( bool condition, const std::string& message )
     {
         if( condition )
             return;

@@ -60,7 +60,6 @@ set(APP_SOURCES
     src/main.cpp
     src/addon_registry.cpp
     src/as_predefined.cpp
-    src/utility/CString.cpp
     src/Tests.cpp
 )
 
