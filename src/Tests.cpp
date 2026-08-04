@@ -176,7 +176,7 @@ class CASDocTests : public CASDocRegistry
     }
 };
 
-CASDocRegisterInterface(CASDocTests);
+CASDocRegisterInterface(Tests);
 
 struct CustomConsoleReporter : public doctest::IReporter
 {

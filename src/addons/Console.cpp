@@ -80,4 +80,4 @@ class CASDocConsole : public CASDocRegistry
     }
 };
 
-CASDocRegisterInterface(CASDocConsole);
+CASDocRegisterInterface(Console);

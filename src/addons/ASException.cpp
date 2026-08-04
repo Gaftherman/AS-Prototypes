@@ -64,4 +64,4 @@ class CASDocException : public CASDocRegistry
     }
 };
 
-CASDocRegisterInterface(CASDocException);
+CASDocRegisterInterface(Exception);

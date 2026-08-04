@@ -20,8 +20,10 @@ class CASDocRegistry;
 
 inline std::vector<CASDocRegistry*> g_ASRegistry;
 
+// Name of your registry class, give your class a prefix of "CASDoc" and input in this macro the rest of the name
+// For example your class is named "CASDocException" so you call CASDocRegisterInterface(Exception)
 #define CASDocRegisterInterface(T) \
-inline CASDocRegistry* gp##T = g_ASRegistry.emplace_back(new T())->__SetName__( #T )
+inline CASDocRegistry* gpCASDoc##T = g_ASRegistry.emplace_back(new CASDoc##T())->__SetName__( #T )
 //inline InterfaceType* gp##T = static_cast<T*>(g_ASRegistry.emplace_back(new T()))->__SetName__( #T )
 
 class CASDocRegistry
@@ -307,11 +309,7 @@ public:
         {
             if( GeneratePredefined )
             {
-#ifndef NDEBUG
                 GenerateScriptPredefined( Engine, "../as.predefined" );
-#else
-                GenerateScriptPredefined( Engine, "as.predefined" );
-#endif
             }
             if( GenerateDocumentation )
             {

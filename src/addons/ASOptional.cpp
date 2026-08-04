@@ -150,7 +150,7 @@ class CASDocOptional : public CASDocRegistry
     }
 };
 
-CASDocRegisterInterface(CASDocOptional);
+CASDocRegisterInterface(Optional);
 
 #undef OPTIONAL_NAME
 #undef OPTIONAL_REGISTER_NULLOPT

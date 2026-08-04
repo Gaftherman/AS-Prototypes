@@ -161,6 +161,4 @@ void main()
 
     OptHandleWithValue = null;
     Expect( "optional@ assign (value) to null", true, OptHandleWithValue !is null && !OptHandleWithValue.has_value() );
-
-    Tests::Stop();
 }
