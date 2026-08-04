@@ -143,7 +143,7 @@ class CASDocOptional : public CASDocRegistry
         ) &&
         RegisterGlobalProperty(
             "Generic null/empty " OPTIONAL_NAME " for " OPTIONAL_NAME "<T> operations."sv,
-            "const " OPTIONAL_NULLOPT_NAME "@ " OPTIONAL_NULLOPT_PROPERTY_NAME,
+            "const " OPTIONAL_NULLOPT_NAME "@ const " OPTIONAL_NULLOPT_PROPERTY_NAME,
             &g_nullopt
 #endif
         );

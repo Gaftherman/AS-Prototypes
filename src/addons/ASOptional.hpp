@@ -316,7 +316,7 @@ public:
             engine->RegisterObjectBehaviour( "optional<T>", asBEHAVE_FACTORY, "optional<T>@ f(int &in, const nullopt_t@ value)", asFUNCTIONPR( ASOptional::ASNullOptional::Factory, ( asITypeInfo*, ASOptional::ASNullOptional* ), ASOptional* ), asCALL_CDECL );
             engine->RegisterObjectMethod( "optional<T>", "void set( const nullopt_t@ value )", asFUNCTIONPR( ASOptional::ASNullOptional::Clear, ( ASOptional*, ASOptional::ASNullOptional* ), void ), asCALL_CDECL_OBJFIRST );
             engine->RegisterObjectMethod( "optional<T>", "optional<T>& opAssign( const nullopt_t@ value )", asFUNCTIONPR( ASOptional::ASNullOptional::Clear, ( ASOptional*, ASOptional::ASNullOptional* ), void ), asCALL_CDECL_OBJFIRST );
-            engine->RegisterGlobalProperty( "const nullopt_t@ nullopt", &g_nullopt );
+            engine->RegisterGlobalProperty( "const nullopt_t@ const nullopt", &g_nullopt );
         }
 
         return true;
