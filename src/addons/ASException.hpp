@@ -346,4 +346,29 @@ namespace ASException
             }
         }
     }
+
+    static inline bool Register( asIScriptEngine* engine )
+    {
+        if( !engine )
+            return false;
+
+        engine->SetDefaultNamespace( "Exception" );
+        engine->RegisterGlobalFunction( "void Throw( const string&in exception, bool canCatch = true )", asFUNCTION( ASException::Throw ), asCALL_CDECL );
+
+        if( engine->GetTypeIdByDecl( "dictionary" ) >= 0 )
+        {
+            engine->RegisterGlobalFunction( "void Throw( const string&in exception, dictionary@ additionalData, bool canCatch = true )", asFUNCTION( ASException::ThrowDictionary ), asCALL_CDECL );
+            engine->RegisterGlobalFunction( "dictionary@ Dictionary()", asFUNCTION( ASException::Dictionary ), asCALL_CDECL );
+        }
+
+        engine->RegisterGlobalFunction( "void Clear()", asFUNCTION( ASException::ClearScripted ), asCALL_CDECL );
+        engine->RegisterGlobalFunction( "int Id()", asFUNCTION( ASException::Id ), asCALL_CDECL );
+        engine->RegisterGlobalFunction( "int Line()", asFUNCTION( ASException::Line ), asCALL_CDECL );
+        engine->RegisterGlobalFunction( "string Message()", asFUNCTION( ASException::Message ), asCALL_CDECL );
+        engine->RegisterGlobalFunction( "string CallStack()", asFUNCTION( ASException::CallStack ), asCALL_CDECL );
+        engine->RegisterGlobalFunction( "void ScriptSection( string&out absolute = void, string&out relative = void, string&out fileName = void, string&out methodName = void, string&out nameSpace = void, string&out objectName = void )", asFUNCTION( ASException::ScriptSection ), asCALL_CDECL );
+        engine->SetDefaultNamespace( "" );
+
+        return true;
+    }
 }

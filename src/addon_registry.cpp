@@ -23,8 +23,10 @@
 
 namespace AddonRegistry {
 
-bool RegisterAllAddons(asIScriptEngine* engine) {
-    if (!engine) return false;
+bool RegisterDefaultAddons( asIScriptEngine* engine )
+{
+    if( !engine )
+        return false;
 
     RegisterStdString(engine);
     RegisterScriptArray(engine, true);
@@ -36,6 +38,40 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
     RegisterScriptMath(engine);
     RegisterScriptHandle(engine);
     RegisterScriptWeakRef(engine);
+
+    return true;
+}
+
+#ifndef NDEBUG
+#include "addons/ASException.hpp"
+
+void TestGenericRegistry()
+{
+    asIScriptEngine* engine = asCreateScriptEngine();
+
+    RegisterDefaultAddons(engine);
+
+    assert( ASException::Register( engine ) );
+
+    engine->ShutDownAndRelease();
+}
+#endif
+
+bool RegisterAllAddons( asIScriptEngine* engine )
+{
+    if( !engine )
+        return false;
+
+    RegisterDefaultAddons(engine);
+
+#ifndef NDEBUG
+    static bool FirstTime = true; // Generate these stuff only once and assume it's ok
+    TestGenericRegistry();
+    CASDocRegistry::Verbose = FirstTime;
+    CASDocRegistry::GenerateDocumentation = FirstTime;
+    CASDocRegistry::GeneratePredefined = FirstTime;
+    FirstTime = false;
+#endif
 
     ASDispose::Register( engine );
 
@@ -64,14 +100,6 @@ bool RegisterAllAddons(asIScriptEngine* engine) {
             return false;
         };
     }
-
-#ifndef NDEBUG
-    static bool FirstTime = true; // Geneate these stuff only once and assume it's ok
-    CASDocRegistry::Verbose = FirstTime;
-    CASDocRegistry::GenerateDocumentation = FirstTime;
-    CASDocRegistry::GeneratePredefined = FirstTime;
-    FirstTime = false;
-#endif
 
     CASDocRegistry::Engine = engine;
     CASDocRegistry::RegisterInterfaces();
