@@ -38,9 +38,9 @@ class ASJSON
 
         enum class error_handler
         {
-            strict = nlohmann::json::error_handler_t::strict,
-            coerce = nlohmann::json::error_handler_t::replace,
-            permissive = nlohmann::json::error_handler_t::ignore
+            strict = 0,
+            coerce,
+            permissive
         };
 
         nlohmann::json m_json;
@@ -205,8 +205,23 @@ class ASJSON
 
             try
             {
+                auto nlohmannErrHandler = nlohmann::json::error_handler_t::strict;
+
+                switch( obj->m_ErrorHandlerMode )
+                {
+                    case error_handler::coerce:
+                        nlohmannErrHandler = nlohmann::json::error_handler_t::replace;
+                        break;
+                    case error_handler::permissive:
+                        nlohmannErrHandler = nlohmann::json::error_handler_t::ignore;
+                        break;
+                    case error_handler::strict:
+                    default:
+                        break;
+                }
+
                 // I wish nlohmann json had a "separator" char like python.
-                serialized = obj->m_json.dump( indents, ' ', false, static_cast<nlohmann::json::error_handler_t>(obj->m_ErrorHandlerMode) );
+                serialized = obj->m_json.dump( indents, ' ', false, nlohmannErrHandler );
                 return ( serialized.size() > 0 );
             }
             catch( nlohmann::json::exception& exception )
@@ -239,7 +254,7 @@ class ASJSON
             {
                 if( ctx != nullptr )
                     ctx->SetException( "The application does not implements a file system dump callback.", true );
-                return nullptr;
+                return false;
             }
 
             std::filesystem::path path( std::filesystem::absolute( filePath ) );
@@ -419,9 +434,9 @@ class ASJSON
 
                 // Error handlers for dump/s
                 REGISTER_ENUM( "error_handler", "Specifies error handling strategy during JSON serialization and deserialization." );
-                REGISTER_ENUM_VALUE( "error_handler", "strict", static_cast<int>(nlohmann::json::error_handler_t::strict), "Throw a type_error exception on invalid UTF-8 sequences." );
-                REGISTER_ENUM_VALUE( "error_handler", "replace", static_cast<int>(nlohmann::json::error_handler_t::replace), "Replace invalid UTF-8 sequences with U+FFFD." );
-                REGISTER_ENUM_VALUE( "error_handler", "ignore", static_cast<int>(nlohmann::json::error_handler_t::ignore), "Ignore invalid UTF-8 sequences." );
+                REGISTER_ENUM_VALUE( "error_handler", "strict", static_cast<int>(ASJSON::error_handler::strict), "Strict, raises exceptions when anything wrong happens." );
+                REGISTER_ENUM_VALUE( "error_handler", "coerce", static_cast<int>(ASJSON::error_handler::coerce), "Adaptative, avoids raising exceptions at all costs. returns default values if empty, converts numerical values to the getter, converts utf8 text, and makes various other operations more safer but lot of things could silently fail. consider using Permisive instead." );
+                REGISTER_ENUM_VALUE( "error_handler", "permissive", static_cast<int>(ASJSON::error_handler::permissive), "Permisive, avoids raising exceptions but remains strict in general. returning null pointers, removes invalid utf8. writes error messages to the output callback if provided." );
 
                 // Return a string representing the serialized given object
                 REGISTER_GLOBAL_FUNCTION( "string dumps( const JSON@ obj, int indents = -1, error_handler errors = error_handler::strict )", asFUNCTION(ASJSON::dumps), asCALL_CDECL, "Serializes a JSON object into a formatted string." );

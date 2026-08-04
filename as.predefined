@@ -379,12 +379,12 @@ namespace json
     /// Specifies error handling strategy during JSON serialization and deserialization.
     enum error_handler
     {
-        /// Throw a type_error exception on invalid UTF-8 sequences.
+        /// Strict, raises exceptions when anything wrong happens.
         strict,
-        /// Replace invalid UTF-8 sequences with U+FFFD.
-        replace,
-        /// Ignore invalid UTF-8 sequences.
-        ignore
+        /// Adaptative, avoids raising exceptions at all costs. returns default values if empty, converts numerical values to the getter, converts utf8 text, and makes various other operations more safer but lot of things could silently fail. consider using Permisive instead.
+        coerce,
+        /// Permisive, avoids raising exceptions but remains strict in general. returning null pointers, removes invalid utf8. writes error messages to the output callback if provided.
+        permissive
     }
     /// Loads and parses a JSON file from the filesystem.
     JSON@ load(const string&in filePath, bool ignore_comments = true);
