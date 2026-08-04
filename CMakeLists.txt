@@ -50,6 +50,7 @@ set(ANGELSCRIPT_ADDON_SOURCES
 
     # Our addons
     src/addons/ASException.cpp
+    src/addons/ASJSON.cpp
     src/addons/ASOptional.cpp
     src/addons/Console.cpp
 )

@@ -45,6 +45,7 @@ bool RegisterDefaultAddons( asIScriptEngine* engine )
 
 #ifndef NDEBUG
 #include "addons/ASException.hpp"
+#include "addons/ASJSON.hpp"
 #include "addons/ASOptional.hpp"
 #define REG_TEST(T)r=T;if(!r){TotalFails++;}else{TotalPasses++;std::cout<<#T" propertly registers."<<std::endl;}assert(r);
 namespace Tests
@@ -60,6 +61,7 @@ void TestGenericRegistry()
     bool r;
 
     REG_TEST( ASException::Register( engine ) );
+    REG_TEST( ASJSON::Register( engine ) );
     REG_TEST( ASOptional::Register( engine, true ) );
 
     engine->ShutDownAndRelease();
@@ -89,7 +91,6 @@ bool RegisterAllAddons( asIScriptEngine* engine )
 
     ASDispose::Register( engine );
 
-    ASJSON::Register( engine );
     {
         ASJSON::FILESYSTEM_LOAD_CALLBACK = []( std::filesystem::path& path, std::string& content, std::string& err ) -> bool
         {

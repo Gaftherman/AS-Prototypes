@@ -80,6 +80,48 @@ public:
     return ( r >= 0 ); \
 }
 
+    static bool RegisterEnumValue( const char* type, const char* valName, int value )
+    APIREG( valName, RegisterEnumValue( type, valName, value ) )
+
+    bool RegisterEnumValue( std::string_view docString, const char* type, const char* valName, int value )
+    {
+        int r = RegisterEnumValue( type, valName, value );
+
+        if( GeneratePredefined )
+        {
+            std::string comment( docString );
+
+            PRINT_DOC(docString);
+
+            ASDoc::RegisterEnumValueComment( type, valName, comment, this->GetName() );
+        }
+
+        assert( !docString.empty() );
+
+        return ( r >= 0 );
+    }
+
+    static bool RegisterEnum( const char* type )
+    APIREG( type, RegisterEnum( type ) )
+
+    bool RegisterEnum( std::string_view docString, const char* type )
+    {
+        int r = RegisterEnum( type );
+
+        if( GeneratePredefined )
+        {
+            std::string comment( docString );
+
+            PRINT_DOC(docString);
+
+            ASDoc::RegisterEnumComment( type, comment, this->GetName() );
+        }
+
+        assert( !docString.empty() );
+
+        return ( r >= 0 );
+    }
+
     static bool SetDefaultNamespace( const char* nameSpace )
     APIREG( nameSpace, SetDefaultNamespace( nameSpace ) )
 
@@ -114,14 +156,14 @@ public:
 
             PRINT_DOC(docString);
 
-            asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
+            const asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
 
             if( type != nullptr )
             {
                 std::string declStr(declaration);
                 size_t spacePos = declStr.rfind(' ');
                 std::string propName = (spacePos != std::string::npos) ? declStr.substr(spacePos + 1) : declStr;
-                ASDoc::RegisterPropertyComment(type, propName, comment, this->GetName() );
+                ASDoc::RegisterPropertyComment( type, propName, comment, this->GetName() );
             }
         }
 
@@ -214,7 +256,7 @@ public:
 
             PRINT_DOC(docString);
 
-            asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
+            const asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
             asIScriptFunction* func = Engine->GetFunctionById(r);
 
             if( func != nullptr )
@@ -243,7 +285,7 @@ public:
 
             PRINT_DOC(docString);
 
-            asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
+            const asITypeInfo* type = Engine->GetTypeInfoByDecl(obj);
             asIScriptFunction* func = type ? type->GetMethodByDecl(declaration) : nullptr;
 
            if( func == nullptr )

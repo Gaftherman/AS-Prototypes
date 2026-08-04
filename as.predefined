@@ -223,33 +223,32 @@ class const_weakref<T>
     const_weakref<T>& opHndlAssign(const weakref<T>&in);
     bool opEquals(const weakref<T>&in) const;
 }
-/// Addon: ASJSON
-/// JSON value container supporting null, boolean, number, string, array, and object types.
-class JSON
+/// Constructs a json array value.
+class json
 {
-    /// Returns a string representation of the JSON object.
+    /// Returns a string representation of the json object.
     string to_string() const;
-    /// Returns true if the JSON value is null.
+    /// Returns true if the json value is null.
     bool is_null() const;
-    /// Returns true if the JSON value is a boolean.
+    /// Returns true if the json value is a boolean.
     bool is_boolean() const;
-    /// Returns true if the JSON value is a number.
+    /// Returns true if the json value is a number.
     bool is_number() const;
-    /// Returns true if the JSON value is an integer number.
+    /// Returns true if the json value is an integer number.
     bool is_number_integer() const;
-    /// Returns true if the JSON value is an unsigned integer number.
+    /// Returns true if the json value is an unsigned integer number.
     bool is_number_unsigned() const;
-    /// Returns true if the JSON value is a floating point number.
+    /// Returns true if the json value is a floating point number.
     bool is_number_float() const;
-    /// Returns true if the JSON value is an object.
+    /// Returns true if the json value is an object.
     bool is_object() const;
-    /// Returns true if the JSON value is an array.
+    /// Returns true if the json value is an array.
     bool is_array() const;
-    /// Returns true if the JSON value is a string.
+    /// Returns true if the json value is a string.
     bool is_string() const;
-    /// Returns true if the JSON value is a primitive type (null, boolean, number, or string).
+    /// Returns true if the json value is a primitive type (null, boolean, number, or string).
     bool is_primitive() const;
-    /// Returns true if the JSON value is structured (object or array).
+    /// Returns true if the json value is structured (object or array).
     bool is_structured() const;
     /// Defines how should json handle errors.
     json::error_handler m_ErrorHandlerMode;
@@ -373,10 +372,9 @@ namespace Tests
     /// Number of failed test assertions.
     int Fails;
 }
-/// Addon: ASJSON
 namespace json
 {
-    /// Specifies error handling strategy during JSON serialization and deserialization.
+    /// Specifies error handling strategy during json serialization and deserialization.
     enum error_handler
     {
         /// Strict, raises exceptions when anything wrong happens.
@@ -386,12 +384,12 @@ namespace json
         /// Permisive, avoids raising exceptions but remains strict in general. returning null pointers, removes invalid utf8. writes error messages to the output callback if provided.
         permissive
     }
-    /// Loads and parses a JSON file from the filesystem.
-    JSON@ load(const string&in filePath, bool ignore_comments = true);
-    /// Parses a serialized JSON string.
-    JSON@ loads(const string&in serialized, bool ignore_comments = true);
-    /// Serializes a JSON object into a formatted string.
-    string dumps(const JSON@ obj, int indents = -1, error_handler errors = error_handler::strict);
-    /// Serializes a JSON object and writes it to a file.
-    bool dump(const JSON@ obj, const string&in filePath, int indents = -1, error_handler errors = error_handler::strict);
+    /// Parses a serialized json string.
+    json@ loads(const string&in serialized, bool ignore_comments = true);
+    /// Loads and parses a json file from the filesystem.
+    json@ load(const string&in filePath, bool ignore_comments = true);
+    /// Serializes a json object into a formatted string.
+    string dumps(const json@ obj, int indents = -1, error_handler errors = error_handler::strict);
+    /// Serializes a json object and writes it to a file.
+    bool dump(const json@ obj, const string&in filePath, int indents = -1, error_handler errors = error_handler::strict);
 }
